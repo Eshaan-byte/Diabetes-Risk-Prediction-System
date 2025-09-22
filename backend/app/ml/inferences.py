@@ -7,9 +7,9 @@ scaler = joblib.load("app/ml/scaler.pkl")
 pca = joblib.load("app/ml/pca.pkl")
 
 def predict_risk(data: dict) -> dict:
-    X = np.array([[data["pregnancies"], data["glucose"], data["bloodPressure"],
-                   data["insulin"], data["bMI"], data["diabeticFamily"], data["age"],
-                   (data["bMI"] / data["age"])]])
+    X = np.array([[data["pregnancies"], data["glucose"], data["blood_pressure"],
+                   data["insulin"], data["bmi"], data["diabetic_family"], data["age"],
+                   (data["bmi"] / data["age"])]])
     
     # Reshape, scale, transform
     X_scaled = scaler.transform(X.reshape(1, -1))
@@ -20,10 +20,10 @@ def predict_risk(data: dict) -> dict:
     risk = float(proba[0])
 
     if risk <= 0.33:
-        label = "low risk"
+        label = "Low Risk"
     elif risk <= 0.66:
-        label = "medium risk"
+        label = "Medium Risk"
     else:
-        label = "high risk"
+        label = "High Risk"
 
-    return {"prediction": label, "risk_score": round(risk * 100, 2)}
+    return {"outcome": label, "prediction_prob": round(risk * 100, 2)}

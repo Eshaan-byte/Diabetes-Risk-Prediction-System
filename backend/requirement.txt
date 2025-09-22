@@ -1,17 +1,16 @@
 fastapi==0.116.1
 uvicorn==0.35.0
+sqlmodel==0.0.24
+SQLAlchemy==2.0.43
 pydantic==2.11.7
-scikit-learn==1.7.1
-pandas==2.3.1
+pydantic_core==2.33.2
+python-dotenv==1.1.1
+pydantic[email]==2.11.7
+passlib[bcrypt]==1.7.4
+PyJWT==2.10.1
+email-validator==2.3.0
+psycopg2-binary==2.9.10
 numpy==2.2.6
-
+pandas==2.3.1
+scikit-learn==1.7.1
 joblib==1.5.2
-psycopg2-binary==2.9.9   # PostgreSQL driver
-python-multipart==0.0.9  # if you handle file uploads
-shap==0.46.0             # only if you plan to use SHAP in API
-
-#new
-sqlmodel
-python-dotenv
-passlib[bcrypt]
-pydantic[email]

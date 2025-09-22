@@ -10,4 +10,8 @@ app.include_router(prediction.router, prefix="/predict", tags=["Prediction"])
 
 @app.get("/")
 def root():
-    return {"message": "Health Records API is running 🚀"}
+    return {"message": "Health Records API is running"}
+
+
+#Run the uvicorn FastAPI
+#py -m uvicorn app.main:app --reload

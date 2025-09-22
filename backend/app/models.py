@@ -1,23 +1,26 @@
+from uuid import UUID
 from sqlmodel import SQLModel, Field
 from typing import Optional
 import datetime
 
-class User(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+#the model of users table
+class users(SQLModel, table=True):
+    user_id: UUID = Field(default=None, primary_key=True, sa_column_kwargs={"server_default": "gen_random_uuid()"})
     email: str
-    hashed_password: str
+    password_hash: str
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
-class HealthRecord(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int
+#the model of health_records table
+class health_records(SQLModel, table=True):
+    record_id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: UUID
     pregnancies: int
-    glucose: float
-    bloodPressure: float
-    insulin: float
-    bMI: float
-    diabeticFamily: int
+    glucose: int
+    blood_pressure: int
+    insulin: int
+    bmi: float
+    diabetic_family: int
     age: int
-    risk_score: float
-    prediction: str
+    outcome: str
+    prediction_prob: float
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)

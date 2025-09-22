@@ -1,5 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
+#Schemas for user inputs
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -11,12 +13,8 @@ class UserLogin(BaseModel):
 class PatientData(BaseModel):
     pregnancies: int
     glucose: int
-    bloodPressure: int
+    blood_pressure: int
     insulin: int
-    bMI: float
-    diabeticFamily: int
+    bmi: float
+    diabetic_family: int
     age: int
-
-class PredictionResponse(BaseModel):
-    risk: float
-    label: str
