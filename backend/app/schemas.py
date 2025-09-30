@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+import datetime
 
 #Schemas for user inputs
 
@@ -9,6 +10,7 @@ class UserCreate(BaseModel):
     last_name: str
     username: str
     phone_number: str
+    date_of_birth: datetime.date
 
 class UserLogin(BaseModel):
     email: EmailStr | str

@@ -12,6 +12,7 @@ class users(SQLModel, table=True):
     last_name: str
     username: str = Field(default=None, index=True, unique=True)
     phone_number: str
+    date_of_birth: datetime.date = None
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
 #the model of health_records table

@@ -67,6 +67,7 @@ def signup(user: UserCreate, session: Session = Depends(get_session)):
         last_name=user.last_name,
         phone_number=user.phone_number,
         password_hash=hashed_pw,
+        date_of_birth=user.date_of_birth
     )
     session.add(db_user)
     session.commit()
@@ -78,7 +79,8 @@ def signup(user: UserCreate, session: Session = Depends(get_session)):
         "first_name": db_user.first_name,
         "last_name": db_user.last_name,
         "phone_number": db_user.phone_number,
-        "created_at": db_user.created_at,
+        "date_of_birth": user.date_of_birth,
+        "created_at": db_user.created_at
     }
 
 #API call to login
