@@ -8,6 +8,10 @@ class users(SQLModel, table=True):
     user_id: UUID = Field(default=None, primary_key=True, sa_column_kwargs={"server_default": "gen_random_uuid()"})
     email: str
     password_hash: str
+    first_name: str
+    last_name: str
+    username: str = Field(default=None, index=True, unique=True)
+    phone_number: str
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
 #the model of health_records table
