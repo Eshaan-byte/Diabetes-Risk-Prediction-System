@@ -18,11 +18,11 @@ export default function Login() {
     setIsLoading(true);
     setError('');
 
-    const success = await login(email, password);
-    if (success) {
+    const result = await login(email, password);
+    if (result.success) {
       navigate('/dashboard');
     } else {
-      setError('Invalid credentials');
+      setError(result.message);
     }
     setIsLoading(false);
   };
@@ -72,13 +72,13 @@ export default function Login() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Username
+                Username or Email
               </label>
               <input
                 id="email"
-                type="email"
+                type="text"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) =>  setEmail(e.target.value)}
                 placeholder="Enter your username"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
@@ -118,7 +118,7 @@ export default function Login() {
               disabled={isLoading}
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? 'Signing In...' : 'Login'}
             </button>
 
             <div className="text-center">

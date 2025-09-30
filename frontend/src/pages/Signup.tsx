@@ -4,11 +4,11 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function Signup() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     email: '',
-    dateOfBirth: '',
-    phoneNumber: '',
+    date_of_birth: '',
+    phone_number: '',
     username: '',
     password: '',
     confirmPassword: '',
@@ -43,22 +43,22 @@ export default function Signup() {
     }
 
     setIsLoading(true);
-    const success = await signup(formData);
-    if (success) {
+    const result = await signup(formData);
+    if (result.success) {
       navigate('/dashboard');
     } else {
-      setError('Registration failed');
+      setError(result.message);
     }
     setIsLoading(false);
   };
 
   const handleReset = () => {
     setFormData({
-      firstName: '',
-      lastName: '',
+      first_name: '',
+      last_name: '',
       email: '',
-      dateOfBirth: '',
-      phoneNumber: '',
+      date_of_birth: '',
+      phone_number: '',
       username: '',
       password: '',
       confirmPassword: '',
@@ -115,8 +115,8 @@ export default function Signup() {
                 </label>
                 <input
                   type="text"
-                  name="firstName"
-                  value={formData.firstName}
+                  name="first_name"
+                  value={formData.first_name}
                   onChange={handleChange}
                   placeholder="Enter your first name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -129,8 +129,8 @@ export default function Signup() {
                 </label>
                 <input
                   type="text"
-                  name="lastName"
-                  value={formData.lastName}
+                  name="last_name"
+                  value={formData.last_name}
                   onChange={handleChange}
                   placeholder="Enter your last name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -160,8 +160,8 @@ export default function Signup() {
               </label>
               <input
                 type="date"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
+                name="date_of_birth"
+                value={formData.date_of_birth}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
@@ -174,8 +174,8 @@ export default function Signup() {
               </label>
               <input
                 type="tel"
-                name="phoneNumber"
-                value={formData.phoneNumber}
+                name="phone_number"
+                value={formData.phone_number}
                 onChange={handleChange}
                 placeholder="Enter your phone number"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"

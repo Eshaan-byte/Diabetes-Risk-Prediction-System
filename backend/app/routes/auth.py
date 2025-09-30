@@ -72,6 +72,7 @@ def signup(user: UserCreate, session: Session = Depends(get_session)):
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
+    token = create_access_token({"sub": str(db_user.user_id)})
     return {
         "id": db_user.user_id,
         "email": db_user.email,
@@ -80,7 +81,9 @@ def signup(user: UserCreate, session: Session = Depends(get_session)):
         "last_name": db_user.last_name,
         "phone_number": db_user.phone_number,
         "date_of_birth": user.date_of_birth,
-        "created_at": db_user.created_at
+        "created_at": db_user.created_at,
+        "access_token": token,
+        "token_type": "bearer"
     }
 
 #API call to login
@@ -91,4 +94,14 @@ def login(user: UserLogin, session: Session = Depends(get_session)):
     if not db_user or not bcrypt.verify(user.password, db_user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token({"sub": str(db_user.user_id)})
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "id": db_user.user_id,
+        "email": db_user.email,
+        "username": db_user.username,
+        "first_name": db_user.first_name,
+        "last_name": db_user.last_name,
+        "phone_number": db_user.phone_number,
+        "date_of_birth": db_user.date_of_birth,
+        "created_at": db_user.created_at,
+        "access_token": token,
+        "token_type": "bearer"}
