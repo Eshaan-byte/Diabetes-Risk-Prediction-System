@@ -34,19 +34,19 @@ export default function ReviewRecords() {
 
   // Prepare chart data
   const riskTrendData = assessments.map(a => ({
-    date: format(new Date(a.date), 'MMM dd'),
+    date: format(new Date(a.date!), 'MMM dd'),
     risk: a.riskPercentage
-  })).reverse();
+  }));
 
   const bmiTrendData = assessments.map(a => ({
-    date: format(new Date(a.date), 'MMM dd'),
+    date: format(new Date(a.date!), 'MMM dd'),
     bmi: a.bmi
-  })).reverse();
+  }));
 
   const glucoseTrendData = assessments.map(a => ({
-    date: format(new Date(a.date), 'MMM dd'),
+    date: format(new Date(a.date!), 'MMM dd'),
     glucose: a.glucose
-  })).reverse();
+  }));
 
   return (
     <div className="space-y-8">
@@ -81,7 +81,7 @@ export default function ReviewRecords() {
                 <React.Fragment key={assessment.id}>
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {format(new Date(assessment.date), 'dd/MM/yyyy')}
+                      {format(new Date(assessment.date!), 'dd/MM/yyyy')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRiskColor(assessment.riskLevel)}`}>
@@ -102,21 +102,21 @@ export default function ReviewRecords() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button
-                        onClick={() => handleView(assessment.id)}
+                        onClick={() => handleView(assessment.id!)}
                         className="text-blue-600 hover:text-blue-900"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleEdit(assessment.id)}
+                        onClick={() => handleEdit(assessment.id!)}
                         className="text-yellow-600 hover:text-yellow-900"
                         title="Edit"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(assessment.id)}
+                        onClick={() => handleDelete(assessment.id!)}
                         className="text-red-600 hover:text-red-900"
                         title="Delete"
                       >
@@ -137,16 +137,12 @@ export default function ReviewRecords() {
                               <p className="text-gray-900">{assessment.pregnancies || 'N/A'}</p>
                             </div>
                             <div>
-                              <span className="font-medium text-gray-700">Skin Thickness:</span>
-                              <p className="text-gray-900">{assessment.skinThickness || 'N/A'} mm</p>
-                            </div>
-                            <div>
                               <span className="font-medium text-gray-700">Insulin Level:</span>
                               <p className="text-gray-900">{assessment.insulin || 'N/A'} μU/mL</p>
                             </div>
                             <div>
-                              <span className="font-medium text-gray-700">Diabetes Pedigree:</span>
-                              <p className="text-gray-900">{assessment.diabetesPedigree || 'N/A'}</p>
+                              <span className="font-medium text-gray-700">Diabetic Family:</span>
+                              <p className="text-gray-900">{assessment.diabetesFamily != null ? assessment.diabetesFamily ? "True" : "False" : "N/A"}</p>
                             </div>
                             <div>
                               <span className="font-medium text-gray-700">Age:</span>

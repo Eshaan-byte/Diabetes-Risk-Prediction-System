@@ -28,4 +28,4 @@ class health_records(SQLModel, table=True):
     age: int
     outcome: str
     prediction_prob: float
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    created_at: Optional[datetime.datetime] = Field(default_factory=datetime.datetime.utcnow)

@@ -7,10 +7,9 @@ interface FormData {
   pregnancies: string;
   glucose: string;
   bloodPressure: string;
-  skinThickness: string;
   insulin: string;
   bmi: string;
-  diabetesPedigree: string;
+  diabetesFamily: boolean;
   age: string;
 }
 
@@ -22,10 +21,9 @@ export default function UpdateData() {
     pregnancies: '',
     glucose: '',
     bloodPressure: '',
-    skinThickness: '',
     insulin: '',
     bmi: '',
-    diabetesPedigree: '',
+    diabetesFamily: false,
     age: ''
   });
 
@@ -36,9 +34,14 @@ export default function UpdateData() {
     level: 'Low' | 'Moderate' | 'High';
   } | null>(null);
 
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    const newValue = Number(value);
+    if (newValue < 0) return; // ignore negatives
+
+    setFormData({...formData,[name]: newValue});
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,52 +52,16 @@ export default function UpdateData() {
   };
 
   const calculateRisk = () => {
-    // Simple risk calculation algorithm (in real app, this would be ML model)
-    const {
-      pregnancies, glucose, bloodPressure, skinThickness,
-      insulin, bmi, diabetesPedigree, age
-    } = formData;
-
-    let risk = 0;
+    // Simple risk calculation algorithm (in real app, this would be ML model) TBA
     
-    // Age factor
-    risk += Math.min(parseInt(age) * 0.5, 25);
-    
-    // BMI factor
-    const bmiValue = parseFloat(bmi);
-    if (bmiValue > 30) risk += 25;
-    else if (bmiValue > 25) risk += 15;
-    else if (bmiValue < 18.5) risk += 10;
-    
-    // Glucose factor
-    const glucoseValue = parseInt(glucose);
-    if (glucoseValue > 140) risk += 30;
-    else if (glucoseValue > 100) risk += 15;
-    
-    // Blood pressure factor
-    const bpValue = parseInt(bloodPressure);
-    if (bpValue > 140) risk += 20;
-    else if (bpValue > 130) risk += 10;
-    
-    // Other factors
-    if (parseInt(pregnancies) > 0) risk += 10;
-    if (parseFloat(diabetesPedigree) > 0.5) risk += 15;
-    
-    const percentage = Math.min(Math.max(risk, 5), 95);
-    let level: 'Low' | 'Moderate' | 'High';
-    
-    if (percentage < 30) level = 'Low';
-    else if (percentage < 60) level = 'Moderate';
-    else level = 'High';
-    
-    return { percentage, level };
+    // return { percentage, level };
   };
 
   const handleCalculateRisk = () => {
     setIsLoading(true);
     
     // Validate required fields
-    const requiredFields = ['glucose', 'bloodPressure', 'bmi', 'age'];
+    const requiredFields = ['glucose', 'bloodPressure', 'insulin', 'bmi', 'age'];
     const missingFields = requiredFields.filter(field => !formData[field as keyof FormData]);
     
     if (missingFields.length > 0) {
@@ -103,27 +70,30 @@ export default function UpdateData() {
       return;
     }
     
+    // setTimeout(() => {
+    //   const result = calculateRisk();
+    //   setRiskResult(result);
+    //   setIsLoading(false);
+      
+    //   // Add assessment to context
+    //   const assessment = {
+    //     date: new Date().toISOString().split('T')[0],
+    //     riskLevel: result.level,
+    //     riskPercentage: result.percentage,
+    //     pregnancies: parseInt(formData.pregnancies) || 0,
+    //     glucose: parseInt(formData.glucose),
+    //     bloodPressure: parseInt(formData.bloodPressure),
+    //     insulin: parseInt(formData.insulin) || 0,
+    //     bmi: parseFloat(formData.bmi),
+    //     diabetesFamily: (formData.diabetesFamily) || false,
+    //     age: parseInt(formData.age)
+    //   };
+      
+    //   addAssessment(assessment);
+    // }, 1500);
+
     setTimeout(() => {
-      const result = calculateRisk();
-      setRiskResult(result);
       setIsLoading(false);
-      
-      // Add assessment to context
-      const assessment = {
-        date: new Date().toISOString().split('T')[0],
-        riskLevel: result.level,
-        riskPercentage: result.percentage,
-        pregnancies: parseInt(formData.pregnancies) || 0,
-        glucose: parseInt(formData.glucose),
-        bloodPressure: parseInt(formData.bloodPressure),
-        skinThickness: parseInt(formData.skinThickness) || 0,
-        insulin: parseInt(formData.insulin) || 0,
-        bmi: parseFloat(formData.bmi),
-        diabetesPedigree: parseFloat(formData.diabetesPedigree) || 0,
-        age: parseInt(formData.age)
-      };
-      
-      addAssessment(assessment);
     }, 1500);
   };
 
@@ -132,10 +102,9 @@ export default function UpdateData() {
       pregnancies: '',
       glucose: '',
       bloodPressure: '',
-      skinThickness: '',
       insulin: '',
       bmi: '',
-      diabetesPedigree: '',
+      diabetesFamily: false,
       age: ''
     });
     setRiskResult(null);
@@ -143,6 +112,7 @@ export default function UpdateData() {
   };
 
   const handleSubmitCsv = () => {
+    //TBA
     if (csvFile) {
       alert('CSV data processing would be implemented here');
     }
@@ -169,6 +139,7 @@ export default function UpdateData() {
             <input
               type="number"
               name="pregnancies"
+              min={0}  // prevents typing values less than 0
               value={formData.pregnancies}
               onChange={handleInputChange}
               placeholder="Enter # of times pregnant"
@@ -184,6 +155,7 @@ export default function UpdateData() {
             <input
               type="number"
               name="glucose"
+              min={0}  // prevents typing values less than 0
               value={formData.glucose}
               onChange={handleInputChange}
               placeholder="e.g., 95"
@@ -200,6 +172,7 @@ export default function UpdateData() {
             <input
               type="number"
               name="bloodPressure"
+              min={0}  // prevents typing values less than 0
               value={formData.bloodPressure}
               onChange={handleInputChange}
               placeholder="e.g., 70"
@@ -211,17 +184,19 @@ export default function UpdateData() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Skin Thickness (mm)
+              Age (years) *
             </label>
             <input
               type="number"
-              name="skinThickness"
-              value={formData.skinThickness}
+              name="age"
+              min={0}  // prevents typing values less than 0
+              value={formData.age}
               onChange={handleInputChange}
-              placeholder="e.g., 20"
+              placeholder="e.g., 25"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              required
             />
-            <p className="text-xs text-gray-500 mt-1">Triceps skinfold thickness</p>
+            <p className="text-xs text-gray-500 mt-1">Current age in years</p>
           </div>
 
           <div>
@@ -231,6 +206,7 @@ export default function UpdateData() {
             <input
               type="number"
               name="insulin"
+              min={0}  // prevents typing values less than 0
               value={formData.insulin}
               onChange={handleInputChange}
               placeholder="e.g., 80"
@@ -247,6 +223,7 @@ export default function UpdateData() {
               type="number"
               step="0.1"
               name="bmi"
+              min={0}  // prevents typing values less than 0
               value={formData.bmi}
               onChange={handleInputChange}
               placeholder="e.g., 32.0"
@@ -258,35 +235,46 @@ export default function UpdateData() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Diabetes Pedigree Function
+              Diabetic Family
             </label>
-            <input
-              type="number"
-              step="0.001"
-              name="diabetesPedigree"
-              value={formData.diabetesPedigree}
-              onChange={handleInputChange}
-              placeholder="e.g., 0.5"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-            <p className="text-xs text-gray-500 mt-1">Genetic predisposition score (0-2.5)</p>
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="diabetesFamily"
+                  value="true"
+                  checked={formData.diabetesFamily === true}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      diabetesFamily: e.target.value === "true"
+                    })
+                  }
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="ml-2">Yes</span>
+              </label>
+
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="diabetesFamily"
+                  value="false"
+                  checked={formData.diabetesFamily === false}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      diabetesFamily: e.target.value === "true"
+                    })
+                  }
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="ml-2">No</span>
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Do you have a family member with diabetes?</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Age (years) *
-            </label>
-            <input
-              type="number"
-              name="age"
-              value={formData.age}
-              onChange={handleInputChange}
-              placeholder="e.g., 25"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">Current age in years</p>
-          </div>
         </div>
 
         {/* Risk Result */}

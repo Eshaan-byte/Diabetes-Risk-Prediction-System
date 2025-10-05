@@ -1,42 +1,44 @@
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { TrendingUp, Users, Activity, Calendar } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 import { format } from 'date-fns';
 
 export default function Dashboard() {
   const { assessments, getLatestAssessment } = useData();
   const latestAssessment = getLatestAssessment();
 
+  console.log(assessments)
+
   // Calculate statistics
   const averageBMI = assessments.reduce((sum, a) => sum + a.bmi, 0) / assessments.length;
   const totalAssessments = assessments.length;
   const latestRiskPercentage = latestAssessment?.riskPercentage || 0;
-  const latestDate = latestAssessment ? format(new Date(latestAssessment.date), 'dd/MM/yyyy') : '';
+  const latestDate = latestAssessment ? format(new Date(latestAssessment.date!), 'dd/MM/yyyy') : '';
 
   // Prepare chart data
   const riskTrendData = assessments.map(a => ({
-    date: format(new Date(a.date), 'MMM dd'),
+    date: format(new Date(a.date!), 'MMM dd'),
     risk: a.riskPercentage
-  })).reverse();
+  }));
 
   const riskDistributionData = [
-    { name: 'Low Risk', value: assessments.filter(a => a.riskLevel === 'Low').length, color: '#10B981' },
+    { name: 'Low Risk', value: assessments.filter(a => a.riskLevel === 'Low').length,   color: '#10B981' },
     { name: 'Moderate Risk', value: assessments.filter(a => a.riskLevel === 'Moderate').length, color: '#F59E0B' },
     { name: 'High Risk', value: assessments.filter(a => a.riskLevel === 'High').length, color: '#EF4444' }
   ];
 
   const bmiGlucoseTrendData = assessments.map(a => ({
-    date: format(new Date(a.date), 'MMM dd'),
+    date: format(new Date(a.date!), 'MMM dd'),
     bmi: a.bmi,
     glucose: a.glucose / 5 // Scale glucose for better visualization
-  })).reverse();
+  }));
 
   const healthFactorData = [
-    { factor: 'Age', current: 80, optimal: 90 },
-    { factor: 'Blood Pressure', current: 65, optimal: 85 },
-    { factor: 'BMI', current: 70, optimal: 80 },
-    { factor: 'Glucose', current: 75, optimal: 85 }
+    { factor: 'Age', current: latestAssessment?.age, optimal: 90 },
+    { factor: 'Blood Pressure', current: latestAssessment?.bloodPressure, optimal: 85 },
+    { factor: 'BMI', current: latestAssessment?.bmi, optimal: 80 },
+    { factor: 'Glucose', current: latestAssessment?.glucose, optimal: 85 }
   ];
 
   const StatCard = ({ title, value, subtitle, icon: Icon, color }: any) => (
@@ -157,6 +159,7 @@ export default function Dashboard() {
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
+                <Legend />
                 <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} name="BMI" />
                 <Line type="monotone" dataKey="glucose" stroke="#8B5CF6" strokeWidth={2} name="Glucose (scaled)" />
               </LineChart>
@@ -172,9 +175,10 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={healthFactorData} layout="horizontal">
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="factor" type="category" width={100} />
+                <XAxis dataKey="factor" type="category" width={100} />
+                <YAxis type="number" />
                 <Tooltip />
+                <Legend />
                 <Bar dataKey="current" fill="#EF4444" name="Current" />
                 <Bar dataKey="optimal" fill="#10B981" name="Optimal" />
               </BarChart>

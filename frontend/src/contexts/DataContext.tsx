@@ -1,113 +1,173 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+
+// The backend URL
+const API_BASE = "http://127.0.0.1:8000"; //testing URL
+// const API_BASE = "https://diabetes-risk-prediction-api.onrender.com"; 
 
 interface Assessment {
-  id: string;
-  date: string;
+  id?: string;
+  date?: string;
   riskLevel: 'Low' | 'Moderate' | 'High';
   riskPercentage: number;
   bmi: number;
   glucose: number;
   bloodPressure: number;
   pregnancies?: number;
-  skinThickness?: number;
   insulin?: number;
-  diabetesPedigree?: number;
+  diabetesFamily?: boolean;
   age: number;
 }
 
 interface DataContextType {
   assessments: Assessment[];
-  addAssessment: (assessment: Omit<Assessment, 'id'>) => void;
-  updateAssessment: (id: string, assessment: Partial<Assessment>) => void;
-  deleteAssessment: (id: string) => void;
+  addAssessment: (assessment: Omit<Assessment, 'id'>) => Promise<void>;
+  updateAssessment: (id: string, assessment: Assessment) => Promise<void>;
+  deleteAssessment: (id: string) => Promise<void>;
   getLatestAssessment: () => Assessment | undefined;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// Mock data
-const mockAssessments: Assessment[] = [
-  {
-    id: '1',
-    date: '2024-01-15',
-    riskLevel: 'Moderate',
-    riskPercentage: 35,
-    bmi: 24.8,
-    glucose: 105,
-    bloodPressure: 134,
-    pregnancies: 0,
-    skinThickness: 23,
-    insulin: 94,
-    diabetesPedigree: 0.627,
-    age: 32
-  },
-  {
-    id: '2',
-    date: '2024-02-20',
-    riskLevel: 'High',
-    riskPercentage: 66,
-    bmi: 28.2,
-    glucose: 138,
-    bloodPressure: 142,
-    pregnancies: 1,
-    skinThickness: 35,
-    insulin: 168,
-    diabetesPedigree: 0.832,
-    age: 32
-  },
-  {
-    id: '3',
-    date: '2024-03-10',
-    riskLevel: 'Moderate',
-    riskPercentage: 45,
-    bmi: 27.1,
-    glucose: 98,
-    bloodPressure: 126,
-    pregnancies: 1,
-    skinThickness: 29,
-    insulin: 94,
-    diabetesPedigree: 0.832,
-    age: 32
-  },
-  {
-    id: '4',
-    date: '2024-04-05',
-    riskLevel: 'Low',
-    riskPercentage: 25,
-    bmi: 24.8,
-    glucose: 92,
-    bloodPressure: 122,
-    pregnancies: 1,
-    skinThickness: 23,
-    insulin: 78,
-    diabetesPedigree: 0.832,
-    age: 33
+function mapApiToAssessment(apiData: any): Assessment {
+  return {
+    id: String(apiData.record_id),
+    date: apiData.created_at.split("T")[0], // just YYYY-MM-DD
+    riskLevel: apiData.outcome.includes("Low")
+      ? "Low"
+      : apiData.outcome.includes("Medium")
+      ? "Moderate"
+      : "High",
+    riskPercentage: apiData.prediction_prob,
+    bmi: apiData.bmi,
+    glucose: apiData.glucose,
+    bloodPressure: apiData.blood_pressure,
+    pregnancies: apiData.pregnancies,
+    insulin: apiData.insulin,
+    diabetesFamily: Boolean(apiData.diabetic_family),
+    age: apiData.age,
+  };
+}
+
+function mapAssessmentToApi(assessment: Assessment, isUpdate = false) {
+  const payload: any = {
+    glucose: assessment.glucose,
+    blood_pressure: assessment.bloodPressure,
+    bmi: assessment.bmi,
+    pregnancies: assessment.pregnancies,
+    insulin: assessment.insulin,
+    diabetic_family: assessment.diabetesFamily ? 1 : 0,
+    age: assessment.age,
+  };
+
+  if (isUpdate) {
+    payload.record_id = assessment.id; // required for update
   }
-];
+
+  return payload;
+}
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [assessments, setAssessments] = useState<Assessment[]>(mockAssessments);
+  const { user } = useAuth();
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
 
-  const addAssessment = (assessment: Omit<Assessment, 'id'>) => {
-    const newAssessment = {
-      ...assessment,
-      id: Date.now().toString()
+ // Load assessments on component mount
+  useEffect(() => {
+    const fetchAssessments = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/records/my-records`, {
+          method : "GET",
+          headers: {
+            "Authorization": `Bearer ${user?.token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Map each API record into Assessment shape
+          const mapped = data.map((item: any) => mapApiToAssessment(item));
+          setAssessments(mapped);
+        } else {
+          console.error("Failed to fetch assessments", await res.json());
+        }
+      } catch (err) {
+        console.error("Network error fetching records:", err);
+      }
     };
-    setAssessments(prev => [newAssessment, ...prev]);
+
+    if (user?.token) fetchAssessments();
+  }, [user?.token]);
+
+  const addAssessment = async (assessment: Omit<Assessment, 'id'>) => {
+    try {
+      const res = await fetch(`${API_BASE}/records`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify(mapAssessmentToApi(assessment)),
+      });
+
+      if (res.ok) {
+        const newAssessment = await res.json();
+        setAssessments(prev => [...prev, newAssessment]);
+      } else {
+        console.error("Failed to add assessment", await res.json());
+      }
+    } catch (err) {
+      console.error("Network error adding assessment:", err);
+    }
   };
 
-  const updateAssessment = (id: string, updatedAssessment: Partial<Assessment>) => {
-    setAssessments(prev => prev.map(assessment => 
-      assessment.id === id ? { ...assessment, ...updatedAssessment } : assessment
-    ));
+  const updateAssessment = async (id: string, updatedAssessment: Assessment) => {
+    // TBA BACKEND API FOR UPDATE
+    try {
+      const res = await fetch(`${API_BASE}/records/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify(mapAssessmentToApi(updatedAssessment, true)),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setAssessments(prev =>
+          prev.map(assessment =>
+          assessment.id === id ? updatedAssessment : assessment
+          )
+        );
+      } else {
+        console.error("Failed to update assessment", await res.json());
+      }
+    } catch (err) {
+      console.error("Network error updating assessment:", err);
+    }
   };
 
-  const deleteAssessment = (id: string) => {
-    setAssessments(prev => prev.filter(assessment => assessment.id !== id));
+  const deleteAssessment = async (id: string) => {
+    // TBA BACKEND API FOR DELETE
+    try {
+      const res = await fetch(`${API_BASE}/records/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${user?.token}`,
+        },
+      });
+
+      if (res.ok) {
+        setAssessments(prev => prev.filter(a => a.id !== id));
+      } else {
+        console.error("Failed to delete assessment", await res.json());
+      }
+    } catch (err) {
+      console.error("Network error deleting assessment:", err);
+    }
   };
 
   const getLatestAssessment = () => {
-    return assessments.length > 0 ? assessments[0] : undefined;
+    return assessments.length > 0 ? assessments[assessments.length - 1] : undefined;
   };
 
   return (
