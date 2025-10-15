@@ -8,4 +8,4 @@ router = APIRouter()
 @router.post("/")
 def predict(data: PatientData):
     result = predict_risk(data.dict())
-    return result
+    return result, data

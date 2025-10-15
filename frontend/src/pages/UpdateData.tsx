@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../contexts/DataContext';
+import { useData, Assessment } from '../contexts/DataContext';
 import { Upload, Calculator, RotateCcw, FileText } from 'lucide-react';
 import Papa from 'papaparse';
 
@@ -16,7 +16,7 @@ interface FormData {
 
 export default function UpdateData() {
   const navigate = useNavigate();
-  const { addAssessment } = useData();
+  const { addAssessment, addAssessmentsBulk } = useData();
 
   const [formData, setFormData] = useState<FormData>({
     pregnancies: '',
@@ -78,12 +78,6 @@ export default function UpdateData() {
     }
   };
 
-  const calculateRisk = () => {
-    // Simple risk calculation algorithm (in real app, this would be ML model) TBA
-    
-    // return { percentage, level };
-  };
-
   const handleCalculateRisk = () => {
     setIsLoading(true);
     
@@ -97,32 +91,24 @@ export default function UpdateData() {
       return;
     }
     
-    // setTimeout(() => {
-    //   const result = calculateRisk();
-    //   setRiskResult(result);
-    //   setIsLoading(false);
-      
-    //   // Add assessment to context
-    //   const assessment = {
-    //     date: new Date().toISOString().split('T')[0],
-    //     riskLevel: result.level,
-    //     riskPercentage: result.percentage,
-    //     pregnancies: parseInt(formData.pregnancies) || 0,
-    //     glucose: parseInt(formData.glucose),
-    //     bloodPressure: parseInt(formData.bloodPressure),
-    //     insulin: parseInt(formData.insulin) || 0,
-    //     bmi: parseFloat(formData.bmi),
-    //     diabetesFamily: (formData.diabetesFamily) || false,
-    //     age: parseInt(formData.age)
-    //   };
-      
-    //   addAssessment(assessment);
-    // }, 1500);
-
     setTimeout(() => {
       setIsLoading(false);
+      
+      // Add assessment to context
+      const assessment: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'> = {
+        date: new Date().toISOString().split('T')[0],
+        pregnancies: parseInt(formData.pregnancies) || 0,
+        glucose: parseInt(formData.glucose),
+        bloodPressure: parseInt(formData.bloodPressure),
+        insulin: parseInt(formData.insulin) || 0,
+        bmi: parseFloat(formData.bmi),
+        diabetesFamily: formData.diabetesFamily || false,
+        age: parseInt(formData.age),
+      };
+
+      addAssessment(assessment);
     }, 1500);
-  };
+  }
 
   const handleResetForm = () => {
     setFormData({
@@ -151,10 +137,10 @@ export default function UpdateData() {
       const processedData = csvData.map((row: any) => ({
         pregnancies: parseInt(row.pregnancies || row.Pregnancies || '0') || 0,
         glucose: parseInt(row.glucose || row.Glucose || '0') || 0,
-        blood_pressure: parseInt(row.blood_pressure || row['Blood Pressure'] || row.BloodPressure || '0') || 0,
+        bloodPressure: parseInt(row.blood_pressure || row['Blood Pressure'] || row.BloodPressure || '0') || 0,
         insulin: parseInt(row.insulin || row.Insulin || '0') || 0,
         bmi: parseFloat(row.bmi || row.BMI || '0') || 0,
-        diabetic_family: row.diabetic_family === 'true' || row.diabetic_family === '1' || 
+        diabetesFamily: row.diabetic_family === 'true' || row.diabetic_family === '1' || 
                         row['Diabetic Family'] === 'true' || row['Diabetic Family'] === '1' || false,
         age: parseInt(row.age || row.Age || '0') || 0,
         created_at: row.created_at || row.date || new Date().toISOString()
@@ -162,7 +148,7 @@ export default function UpdateData() {
 
       // Validate data
       const validData = processedData.filter(record => 
-        record.glucose > 0 && record.blood_pressure > 0 && record.bmi > 0 && record.age > 0
+        record.glucose > 0 && record.bloodPressure > 0 && record.bmi > 0 && record.age > 0
       );
 
       if (validData.length === 0) {
@@ -174,8 +160,8 @@ export default function UpdateData() {
       console.log('Processed CSV data:', validData);
       alert(`Successfully processed ${validData.length} records from CSV`);
       
-      // In a real implementation, you would send this data to the backend
-      // await addAssessmentsBulk(validData);
+      // Call the API
+      await addAssessmentsBulk(validData);
       
     } catch (error) {
       console.error('Error processing CSV:', error);
