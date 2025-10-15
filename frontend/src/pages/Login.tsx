@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
-import { CONFIG } from '../config';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -132,32 +131,6 @@ export default function Login() {
               </Link>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <h3 className="font-medium text-blue-800 mb-2">Demo Credentials</h3>
-              <p className="text-sm text-blue-700 mb-3">
-                Use these credentials to test the application:
-              </p>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center bg-white px-3 py-2 rounded border">
-                  <span className="text-gray-600">Username:</span>
-                  <span className="font-mono text-blue-800">{CONFIG.DEMO_EMAIL}</span>
-                </div>
-                <div className="flex justify-between items-center bg-white px-3 py-2 rounded border">
-                  <span className="text-gray-600">Password:</span>
-                  <span className="font-mono text-blue-800">{CONFIG.DEMO_PASSWORD}</span>
-                </div>
-              </div>
-              <button 
-                type="button"
-                onClick={() => {
-                  setEmail(CONFIG.DEMO_EMAIL);
-                  setPassword(CONFIG.DEMO_PASSWORD);
-                }}
-                className="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors"
-              >
-                Use Demo Credentials
-              </button>
-            </div>
 
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
               <h3 className="font-medium text-green-800 mb-2">Need Help?</h3>

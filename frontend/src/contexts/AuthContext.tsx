@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { CONFIG, getApiBase } from '../config';
+import { getApiBase } from '../config';
 
 const API_BASE = getApiBase(); 
 
@@ -32,25 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   //login
   const login = async (email: string, password: string): Promise<ResponseResult> => {
-    // Demo mode - check for demo credentials or accept any credentials
-    if (CONFIG.USE_DEMO_MODE) {
-      if (email === CONFIG.DEMO_EMAIL && password === CONFIG.DEMO_PASSWORD) {
-        // Use demo credentials
-        setUser({
-          id: 'demo-user-1',
-          email: 'demo@test.com',
-          firstName: 'Demo',
-          lastName: 'User',
-          userName: 'demo',
-          token: 'demo-token-123'
-        });
-        return { success: true, message: "Login successful (Demo Mode)" };
-      } else {
-        return { success: false, message: `Demo mode: Use ${CONFIG.DEMO_EMAIL} / ${CONFIG.DEMO_PASSWORD}` };
-      }
-    }
-
-    // API mode - try actual API
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
@@ -85,12 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   //Signup
   const signup = async (userData: any): Promise<ResponseResult> => {
-    // Demo mode - mock signup
-    if (CONFIG.USE_DEMO_MODE) {
-      return { success: false, message: `Signup disabled in demo mode. Use ${CONFIG.DEMO_EMAIL} / ${CONFIG.DEMO_PASSWORD} to login.` };
-    }
-
-    // API mode - try actual API
     try {
       const res = await fetch(`${API_BASE}/auth/signup`, {
         method: "POST",
