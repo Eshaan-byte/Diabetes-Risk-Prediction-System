@@ -34,17 +34,17 @@ export default function ReviewRecords() {
 
   // Prepare chart data
   const riskTrendData = assessments.map(a => ({
-    date: format(new Date(a.date!), 'MMM dd'),
+    date: format(new Date(a.date!), 'dd/MM/yyyy'),
     risk: a.riskPercentage
   }));
 
   const bmiTrendData = assessments.map(a => ({
-    date: format(new Date(a.date!), 'MMM dd'),
+    date: format(new Date(a.date!), 'dd/MM/yyyy'),
     bmi: a.bmi
   }));
 
   const glucoseTrendData = assessments.map(a => ({
-    date: format(new Date(a.date!), 'MMM dd'),
+    date: format(new Date(a.date!), 'dd/MM/yyyy'),
     glucose: a.glucose
   }));
 
@@ -169,7 +169,7 @@ export default function ReviewRecords() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={riskTrendData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis dataKey="date" interval="preserveStartEnd" />
                 <YAxis />
                 <Tooltip />
                 <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2} />
@@ -185,7 +185,7 @@ export default function ReviewRecords() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={bmiTrendData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis dataKey="date" interval="preserveStartEnd" />
                 <YAxis />
                 <Tooltip />
                 <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} />
@@ -201,7 +201,7 @@ export default function ReviewRecords() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={glucoseTrendData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis dataKey="date" interval="preserveStartEnd" />
                 <YAxis />
                 <Tooltip />
                 <Line type="monotone" dataKey="glucose" stroke="#8B5CF6" strokeWidth={2} />

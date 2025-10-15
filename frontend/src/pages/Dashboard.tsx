@@ -8,8 +8,6 @@ export default function Dashboard() {
   const { assessments, getLatestAssessment } = useData();
   const latestAssessment = getLatestAssessment();
 
-  console.log(assessments)
-
   // Calculate statistics
   const averageBMI = assessments.reduce((sum, a) => sum + a.bmi, 0) / assessments.length;
   const totalAssessments = assessments.length;
@@ -18,7 +16,7 @@ export default function Dashboard() {
 
   // Prepare chart data
   const riskTrendData = assessments.map(a => ({
-    date: format(new Date(a.date!), 'MMM dd'),
+    date: format(new Date(a.date!), 'dd/MM/yy'),
     risk: a.riskPercentage
   }));
 
@@ -29,7 +27,7 @@ export default function Dashboard() {
   ];
 
   const bmiGlucoseTrendData = assessments.map(a => ({
-    date: format(new Date(a.date!), 'MMM dd'),
+    date: format(new Date(a.date!), 'dd/MM/yy'),
     bmi: a.bmi,
     glucose: a.glucose / 5 // Scale glucose for better visualization
   }));
@@ -106,7 +104,7 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={riskTrendData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis dataKey="date" interval="preserveStartEnd" />
                 <YAxis />
                 <Tooltip />
                 <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2} />
@@ -156,7 +154,7 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={bmiGlucoseTrendData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis dataKey="date" interval="preserveStartEnd" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
