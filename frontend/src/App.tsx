@@ -8,6 +8,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import UpdateData from './pages/UpdateData';
 import ReviewRecords from './pages/ReviewRecords';
+import EditRecord from './pages/EditRecord';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -28,6 +29,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/update-data" element={<UpdateData />} />
         <Route path="/review-records" element={<ReviewRecords />} />
+        <Route path="/edit-record/:id" element={<EditRecord />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </Layout>

@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { CONFIG, getApiBase } from '../config';
 
-// The backend URL
-const API_BASE = "http://127.0.0.1:8000"; //testing URL
-// const API_BASE = "https://diabetes-risk-prediction-api.onrender.com"; 
+const API_BASE = getApiBase(); 
 
 interface Assessment {
   id?: string;
@@ -74,6 +73,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
  // Load assessments on component mount
   useEffect(() => {
     const fetchAssessments = async () => {
+      // Demo mode - load mock data
+      if (CONFIG.USE_DEMO_MODE) {
+        const mockAssessments: Assessment[] = [
+          {
+            id: '1',
+            date: '2024-10-01',
+            riskLevel: 'Low',
+            riskPercentage: 25,
+            bmi: 24.5,
+            glucose: 85,
+            bloodPressure: 70,
+            pregnancies: 0,
+            insulin: 0,
+            diabetesFamily: false,
+            age: 28
+          },
+          {
+            id: '2',
+            date: '2024-09-15',
+            riskLevel: 'Moderate',
+            riskPercentage: 55,
+            bmi: 29.1,
+            glucose: 110,
+            bloodPressure: 80,
+            pregnancies: 1,
+            insulin: 85,
+            diabetesFamily: true,
+            age: 32
+          }
+        ];
+        setAssessments(mockAssessments);
+        return;
+      }
+
+      // API mode - try actual API
       try {
         const res = await fetch(`${API_BASE}/records/my-records`, {
           method : "GET",
@@ -83,7 +117,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         if (res.ok) {
           const data = await res.json();
-          // Map each API record into Assessment shape
           const mapped = data.map((item: any) => mapApiToAssessment(item));
           setAssessments(mapped);
         } else {
@@ -98,6 +131,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [user?.token]);
 
   const addAssessment = async (assessment: Omit<Assessment, 'id'>) => {
+    // Demo mode - add to local state
+    if (CONFIG.USE_DEMO_MODE) {
+      const newAssessment: Assessment = {
+        ...assessment,
+        id: Date.now().toString(),
+        date: assessment.date || new Date().toISOString().split('T')[0]
+      };
+      setAssessments(prev => [...prev, newAssessment]);
+      return;
+    }
+
+    // API mode - try actual API
     try {
       const res = await fetch(`${API_BASE}/records`, {
         method: "POST",
@@ -120,7 +165,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const updateAssessment = async (id: string, updatedAssessment: Assessment) => {
-    // TBA BACKEND API FOR UPDATE
+    // Demo mode - update local state
+    if (CONFIG.USE_DEMO_MODE) {
+      setAssessments(prev =>
+        prev.map(assessment =>
+          assessment.id === id ? updatedAssessment : assessment
+        )
+      );
+      return;
+    }
+
+    // API mode - try actual API
     try {
       const res = await fetch(`${API_BASE}/records/${id}`, {
         method: "PUT",
@@ -147,7 +202,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteAssessment = async (id: string) => {
-    // TBA BACKEND API FOR DELETE
+    // Demo mode - delete from local state
+    if (CONFIG.USE_DEMO_MODE) {
+      setAssessments(prev => prev.filter(a => a.id !== id));
+      return;
+    }
+
+    // API mode - try actual API
     try {
       const res = await fetch(`${API_BASE}/records/${id}`, {
         method: "DELETE",

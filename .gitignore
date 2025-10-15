@@ -14,6 +14,7 @@ venv/
 
 # Environment variable files
 *.env
+env
 
 # Distribution / packaging
 build/

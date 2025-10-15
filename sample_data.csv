@@ -1,0 +1,6 @@
+pregnancies,glucose,blood_pressure,insulin,bmi,diabetic_family,age,created_at
+1,85,66,29,26.6,false,31,2024-01-15T10:30:00
+0,95,70,32,32.1,true,25,2024-02-20T14:20:00
+2,110,80,0,35.7,false,45,2024-03-10T09:15:00
+0,78,50,88,31.0,false,26,2024-04-05T16:45:00
+1,126,88,36,39.3,true,38,2024-05-12T11:00:00

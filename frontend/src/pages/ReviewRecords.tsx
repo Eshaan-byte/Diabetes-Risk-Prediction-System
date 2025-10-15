@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
 
 export default function ReviewRecords() {
+  const navigate = useNavigate();
   const { assessments, deleteAssessment } = useData();
   const [selectedRecord, setSelectedRecord] = useState<string | null>(null);
 
@@ -13,8 +15,7 @@ export default function ReviewRecords() {
   };
 
   const handleEdit = (id: string) => {
-    // In a real app, this would navigate to an edit form
-    console.log('Edit record:', id);
+    navigate(`/edit-record/${id}`);
   };
 
   const handleDelete = (id: string) => {

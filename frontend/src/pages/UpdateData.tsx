@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
-import { Upload, Calculator, RotateCcw } from 'lucide-react';
+import { Upload, Calculator, RotateCcw, FileText } from 'lucide-react';
+import Papa from 'papaparse';
 
 interface FormData {
   pregnancies: string;
@@ -28,7 +29,10 @@ export default function UpdateData() {
   });
 
   const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [csvPreview, setCsvPreview] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [csvProcessing, setCsvProcessing] = useState(false);
   const [riskResult, setRiskResult] = useState<{
     percentage: number;
     level: 'Low' | 'Moderate' | 'High';
@@ -48,6 +52,29 @@ export default function UpdateData() {
     const file = e.target.files?.[0];
     if (file && file.type === 'text/csv') {
       setCsvFile(file);
+      setCsvProcessing(true);
+      
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          if (results.errors.length > 0) {
+            alert('Error parsing CSV: ' + results.errors[0].message);
+            setCsvProcessing(false);
+            return;
+          }
+          
+          setCsvData(results.data);
+          setCsvPreview(results.data.slice(0, 5)); // Show first 5 rows as preview
+          setCsvProcessing(false);
+        },
+        error: (error) => {
+          alert('Error reading file: ' + error.message);
+          setCsvProcessing(false);
+        }
+      });
+    } else {
+      alert('Please select a valid CSV file');
     }
   };
 
@@ -111,10 +138,50 @@ export default function UpdateData() {
     setCsvFile(null);
   };
 
-  const handleSubmitCsv = () => {
-    //TBA
-    if (csvFile) {
-      alert('CSV data processing would be implemented here');
+  const handleSubmitCsv = async () => {
+    if (!csvData.length) {
+      alert('No CSV data to process');
+      return;
+    }
+
+    setCsvProcessing(true);
+    
+    try {
+      // Map CSV columns to expected format
+      const processedData = csvData.map((row: any) => ({
+        pregnancies: parseInt(row.pregnancies || row.Pregnancies || '0') || 0,
+        glucose: parseInt(row.glucose || row.Glucose || '0') || 0,
+        blood_pressure: parseInt(row.blood_pressure || row['Blood Pressure'] || row.BloodPressure || '0') || 0,
+        insulin: parseInt(row.insulin || row.Insulin || '0') || 0,
+        bmi: parseFloat(row.bmi || row.BMI || '0') || 0,
+        diabetic_family: row.diabetic_family === 'true' || row.diabetic_family === '1' || 
+                        row['Diabetic Family'] === 'true' || row['Diabetic Family'] === '1' || false,
+        age: parseInt(row.age || row.Age || '0') || 0,
+        created_at: row.created_at || row.date || new Date().toISOString()
+      }));
+
+      // Validate data
+      const validData = processedData.filter(record => 
+        record.glucose > 0 && record.blood_pressure > 0 && record.bmi > 0 && record.age > 0
+      );
+
+      if (validData.length === 0) {
+        alert('No valid records found in CSV. Please check the format.');
+        setCsvProcessing(false);
+        return;
+      }
+
+      console.log('Processed CSV data:', validData);
+      alert(`Successfully processed ${validData.length} records from CSV`);
+      
+      // In a real implementation, you would send this data to the backend
+      // await addAssessmentsBulk(validData);
+      
+    } catch (error) {
+      console.error('Error processing CSV:', error);
+      alert('Error processing CSV data');
+    } finally {
+      setCsvProcessing(false);
     }
   };
 
@@ -341,11 +408,47 @@ export default function UpdateData() {
           {csvFile && (
             <div className="mt-4 p-4 bg-green-50 rounded-lg">
               <p className="text-green-800 font-medium">File selected: {csvFile.name}</p>
+              {csvProcessing && (
+                <p className="text-blue-600 mt-2">Processing CSV...</p>
+              )}
+              {csvPreview.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Data Preview (first 5 rows):</h4>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-xs border border-gray-300">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          {Object.keys(csvPreview[0]).map((key) => (
+                            <th key={key} className="px-2 py-1 border border-gray-300 text-left font-medium">
+                              {key}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {csvPreview.map((row, index) => (
+                          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            {Object.values(row).map((value: any, cellIndex) => (
+                              <td key={cellIndex} className="px-2 py-1 border border-gray-300">
+                                {String(value)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Total records: {csvData.length}
+                  </p>
+                </div>
+              )}
               <button
                 onClick={handleSubmitCsv}
-                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                disabled={csvProcessing || csvData.length === 0}
+                className="mt-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit with CSV Data
+                {csvProcessing ? 'Processing...' : `Process ${csvData.length} Records`}
               </button>
             </div>
           )}

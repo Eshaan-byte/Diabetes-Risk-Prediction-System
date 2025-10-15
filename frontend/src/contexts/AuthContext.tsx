@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { CONFIG, getApiBase } from '../config';
 
-// The backend URL
-const API_BASE = "http://127.0.0.1:8000"; //testing URL
-// const API_BASE = "https://diabetes-risk-prediction-api.onrender.com"; 
+const API_BASE = getApiBase(); 
 
 interface User {
   id: string;
@@ -33,71 +32,94 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   //login
   const login = async (email: string, password: string): Promise<ResponseResult> => {
-    //API call to /auth/login
-    try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ email, password })
-    });
-
-    if (!res.ok) {
-      const responseData = await res.json(); // parse JSON regardless of status
-      console.error("Login failed", responseData.detail);
-      return { success: false, message: responseData.detail};
+    // Demo mode - check for demo credentials or accept any credentials
+    if (CONFIG.USE_DEMO_MODE) {
+      if (email === CONFIG.DEMO_EMAIL && password === CONFIG.DEMO_PASSWORD) {
+        // Use demo credentials
+        setUser({
+          id: 'demo-user-1',
+          email: 'demo@test.com',
+          firstName: 'Demo',
+          lastName: 'User',
+          userName: 'demo',
+          token: 'demo-token-123'
+        });
+        return { success: true, message: "Login successful (Demo Mode)" };
+      } else {
+        return { success: false, message: `Demo mode: Use ${CONFIG.DEMO_EMAIL} / ${CONFIG.DEMO_PASSWORD}` };
+      }
     }
 
-    const data = await res.json();
-    // Store user info and token
-    setUser({
-      id: data.user_id,
-      email: data.email,
-      firstName: data.first_name,
-      lastName: data.last_name,
-      userName: data.username,
-      token: data.access_token
-    });
-    return { success: true, message: "Login successful", ...data };
-  } catch (err) {
-    console.error(err);
-    return { success: false, message: "Network error, unable to connect to server" };
-  }
+    // API mode - try actual API
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!res.ok) {
+        const responseData = await res.json();
+        console.error("Login failed", responseData.detail);
+        return { success: false, message: responseData.detail};
+      }
+
+      const data = await res.json();
+      setUser({
+        id: data.user_id,
+        email: data.email,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        userName: data.username,
+        token: data.access_token
+      });
+      return { success: true, message: "Login successful", ...data };
+    } catch (err) {
+      console.error(err);
+      return { success: false, message: "Network error, unable to connect to server" };
+    }
   };
 
 
   //Signup
   const signup = async (userData: any): Promise<ResponseResult> => {
-    try {
-    const res = await fetch(`${API_BASE}/auth/signup`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(userData)
-    });
-
-    if (!res.ok) {
-      const responseData = await res.json(); // parse JSON regardless of status
-      console.error("Sign Up failed", responseData.detail);
-      return { success: false, message: responseData.detail};
+    // Demo mode - mock signup
+    if (CONFIG.USE_DEMO_MODE) {
+      return { success: false, message: `Signup disabled in demo mode. Use ${CONFIG.DEMO_EMAIL} / ${CONFIG.DEMO_PASSWORD} to login.` };
     }
 
-    const data = await res.json();
-    setUser({
-      id: data.user_id,
-      email: data.email,
-      firstName: data.first_name,
-      lastName: data.last_name,
-      userName: data.username,
-      token: data.access_token
-    });
-    return { success: true, message: "Sign Up successful", ...data };
-  } catch (err) {
-    console.error(err);
-    return { success: false, message: "Network error, unable to connect to server"};
-  }
+    // API mode - try actual API
+    try {
+      const res = await fetch(`${API_BASE}/auth/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(userData)
+      });
+
+      if (!res.ok) {
+        const responseData = await res.json();
+        console.error("Sign Up failed", responseData.detail);
+        return { success: false, message: responseData.detail};
+      }
+
+      const data = await res.json();
+      setUser({
+        id: data.user_id,
+        email: data.email,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        userName: data.username,
+        token: data.access_token
+      });
+      return { success: true, message: "Sign Up successful", ...data };
+    } catch (err) {
+      console.error(err);
+      return { success: false, message: "Network error, unable to connect to server"};
+    }
   };
 
 
