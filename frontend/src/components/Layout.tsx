@@ -11,7 +11,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
-
+  
   const handleLogout = () => {
     logout();
     navigate('/login');

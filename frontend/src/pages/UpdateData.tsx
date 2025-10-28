@@ -143,7 +143,7 @@ export default function UpdateData() {
         diabetesFamily: row.diabetic_family === 'true' || row.diabetic_family === '1' || 
                         row['Diabetic Family'] === 'true' || row['Diabetic Family'] === '1' || false,
         age: parseInt(row.age || row.Age || '0') || 0,
-        created_at: row.created_at || row.date || new Date().toISOString()
+        date: row.created_at || row.date || new Date().toISOString()
       }));
 
       // Validate data

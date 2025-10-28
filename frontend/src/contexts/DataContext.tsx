@@ -60,6 +60,8 @@ function mapAssessmentToApi(assessment: Omit<Assessment, 'id' | 'riskLevel' | 'r
     insulin: assessment.insulin,
     diabetic_family: assessment.diabetesFamily ? 1 : 0,
     age: assessment.age,
+    // Automatically set created_at: use existing date or current timestamp
+    created_at: 'date' in assessment && assessment.date ? assessment.date : new Date().toISOString(),
   };
 
   if (isUpdate && 'id' in assessment) {
@@ -129,10 +131,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
   assessments: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'>[]) => {
   try {
     // map each assessment to API format with created_at
-    const payload = assessments.map(a => ({
-      ...mapAssessmentToApi(a),
-      created_at: a.date || new Date().toISOString()
-    }));
+    const payload = assessments.map(a => (
+      mapAssessmentToApi(a)
+    ));
+
+    console.log(assessments)
+    console.log(payload)
 
     const res = await fetch(`${API_BASE}/records/bulk`, {
       method: "POST",
