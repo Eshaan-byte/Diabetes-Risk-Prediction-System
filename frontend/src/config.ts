@@ -7,5 +7,5 @@ export const CONFIG = {
 
 // Get the current API base URL
 export const getApiBase = () => {
-  return CONFIG.LOCAL_API; // or CONFIG.REMOTE_API when using remote
+  return CONFIG.REMOTE_API; // or CONFIG.REMOTE_API when using remote
 };

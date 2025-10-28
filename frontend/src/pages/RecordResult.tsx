@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
-import { Save, ArrowLeft, Calculator } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, PieChart, Pie, Cell, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { format } from 'date-fns';
 
 interface EditFormData {
   pregnancies: string;
@@ -11,12 +12,14 @@ interface EditFormData {
   bmi: string;
   diabetesFamily: boolean;
   age: string;
+  riskLevel: 'Low' | 'Moderate' | 'High';
+  riskPercentage: number;
 }
 
-export default function EditRecord() {
+export default function RecordResult() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { assessments, updateAssessment } = useData();
+  const { assessments } = useData();
 
   const [formData, setFormData] = useState<EditFormData>({
     pregnancies: '',
@@ -25,10 +28,11 @@ export default function EditRecord() {
     insulin: '',
     bmi: '',
     diabetesFamily: false,
-    age: ''
+    age: '',
+    riskLevel: 'Low',
+    riskPercentage: 0
   });
 
-  const [isLoading, setIsLoading] = useState(false);
   const [recordFound, setRecordFound] = useState(true);
 
   useEffect(() => {
@@ -42,7 +46,9 @@ export default function EditRecord() {
           insulin: record.insulin?.toString() || '',
           bmi: record.bmi?.toString() || '',
           diabetesFamily: record.diabetesFamily || false,
-          age: record.age?.toString() || ''
+          age: record.age?.toString() || '',
+          riskLevel: record.riskLevel,
+          riskPercentage: record.riskPercentage
         });
       } else {
         setRecordFound(false);
@@ -50,60 +56,11 @@ export default function EditRecord() {
     }
   }, [id, assessments]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    const newValue = Number(value);
-    if (newValue < 0) return; // ignore negatives
-
-    setFormData({ ...formData, [name]: value });
+  const handleGoToDasboard = () => {
+    navigate('/dasboard');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!id) return;
-
-    setIsLoading(true);
-
-    // Validate required fields
-    const requiredFields = ['glucose', 'bloodPressure', 'bmi', 'age'];
-    const missingFields = requiredFields.filter(field => !formData[field as keyof EditFormData]);
-    
-    if (missingFields.length > 0) {
-      alert('Please fill in all required fields');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const updatedRecord = {
-        id,
-        pregnancies: parseInt(formData.pregnancies) || 0,
-        glucose: parseInt(formData.glucose),
-        bloodPressure: parseInt(formData.bloodPressure),
-        insulin: parseInt(formData.insulin) || 0,
-        bmi: parseFloat(formData.bmi),
-        diabetesFamily: formData.diabetesFamily,
-        age: parseInt(formData.age),
-        // Keep original date and recalculate risk
-        date: assessments.find(a => a.id === id)?.date,
-      };
-
-      updateAssessment(id, updatedRecord);
-      navigate('/review-records');
-    } catch (error) {
-      console.error('Error updating record:', error);
-      alert('Error updating record. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
+  const handleGoToRecords = () => {
     navigate('/review-records');
   };
 
@@ -111,7 +68,7 @@ export default function EditRecord() {
     return (
       <div className="max-w-4xl mx-auto text-center py-16">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Record Not Found</h1>
-        <p className="text-gray-600 mb-6">The record you're trying to edit doesn't exist.</p>
+        <p className="text-gray-600 mb-6">The record you're trying to view doesn't exist.</p>
         <button
           onClick={() => navigate('/review-records')}
           className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -122,27 +79,38 @@ export default function EditRecord() {
     );
   }
 
+  // Prepare chart data
+    const riskTrendData = assessments.map(a => ({
+      date: format(new Date(a.date!), 'dd/MM/yyyy'),
+      risk: a.riskPercentage
+    }));
+  
+    const bmiTrendData = assessments.map(a => ({
+      date: format(new Date(a.date!), 'dd/MM/yyyy'),
+      bmi: a.bmi
+    }));
+  
+    const riskDistributionData = [
+    { name: 'Low Risk', value: assessments.filter(a => a.riskLevel === 'Low').length,   color: '#10B981' },
+    { name: 'Moderate Risk', value: assessments.filter(a => a.riskLevel === 'Moderate').length, color: '#F59E0B' },
+    { name: 'High Risk', value: assessments.filter(a => a.riskLevel === 'High').length, color: '#EF4444' }
+  ];
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex items-center space-x-4">
-        <button
-          onClick={handleCancel}
-          className="p-2 text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
         <div>
-          <h1 className="text-3xl font-bold text-blue-600">Edit Health Record</h1>
-          <p className="text-gray-600">Update your diabetes risk assessment data</p>
+          <h1 className="text-3xl font-bold text-blue-600">Prediction Result</h1>
+          <p className="text-gray-600">Your diabetes risk assessment result</p>
         </div>
       </div>
 
-      {/* Edit Form */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-8 border">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Edit Assessment Data</h2>
+      {/* View Form */}
+      <form className="bg-white rounded-lg shadow-sm p-8 border">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Assessment Data</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Number of Pregnancies
@@ -152,9 +120,9 @@ export default function EditRecord() {
               name="pregnancies"
               min={0}
               value={formData.pregnancies}
-              onChange={handleInputChange}
               placeholder="Enter # of times pregnant"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              readOnly
             />
             <p className="text-xs text-gray-500 mt-1">Enter 0 if never pregnant</p>
           </div>
@@ -168,10 +136,9 @@ export default function EditRecord() {
               name="glucose"
               min={0}
               value={formData.glucose}
-              onChange={handleInputChange}
               placeholder="e.g., 95"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
+              readOnly
             />
             <p className="text-xs text-gray-500 mt-1">2-hour oral glucose tolerance test</p>
           </div>
@@ -185,10 +152,9 @@ export default function EditRecord() {
               name="bloodPressure"
               min={0}
               value={formData.bloodPressure}
-              onChange={handleInputChange}
               placeholder="e.g., 70"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
+              readOnly
             />
             <p className="text-xs text-gray-500 mt-1">Lower number in blood pressure reading</p>
           </div>
@@ -202,10 +168,9 @@ export default function EditRecord() {
               name="age"
               min={0}
               value={formData.age}
-              onChange={handleInputChange}
               placeholder="e.g., 25"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
+              readOnly
             />
             <p className="text-xs text-gray-500 mt-1">Current age in years</p>
           </div>
@@ -219,9 +184,9 @@ export default function EditRecord() {
               name="insulin"
               min={0}
               value={formData.insulin}
-              onChange={handleInputChange}
               placeholder="e.g., 80"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              readOnly
             />
             <p className="text-xs text-gray-500 mt-1">2-hour serum insulin level</p>
           </div>
@@ -236,10 +201,9 @@ export default function EditRecord() {
               name="bmi"
               min={0}
               value={formData.bmi}
-              onChange={handleInputChange}
               placeholder="e.g., 32.0"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
+              readOnly
             />
             <p className="text-xs text-gray-500 mt-1">Weight (kg) / Height (m)²</p>
           </div>
@@ -262,6 +226,7 @@ export default function EditRecord() {
                     })
                   }
                   className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  disabled
                 />
                 <span className="ml-2">Yes</span>
               </label>
@@ -279,6 +244,7 @@ export default function EditRecord() {
                     })
                   }
                   className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  disabled
                 />
                 <span className="ml-2">No</span>
               </label>
@@ -287,30 +253,138 @@ export default function EditRecord() {
           </div>
         </div>
 
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Results</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Risk Level
+            </label>
+            <input
+              type="text"
+              name="riskLevel"
+              value={formData.riskLevel}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              readOnly
+            />
+            <p className="text-xs text-gray-500 mt-1">The predicted risk level</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Risk Percentage
+            </label>
+            <input
+              type="text"
+              name="riskPercentage"
+              value={formData.riskPercentage + "%"}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              readOnly
+            />
+            <p className="text-xs text-gray-500 mt-1">The predicted risk percentage</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Recommendation
+            </label>
+            <input
+              type="text"
+              name="recommendation"
+              value={formData.riskLevel} //ADD RECOMMENDATION HERE
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              readOnly
+            />
+            <p className="text-xs text-gray-500 mt-1">The predicted risk level</p>
+          </div>  
+        </div>
+
         {/* Action Buttons */}
         <div className="flex space-x-4 mt-8">
           <button
-            type="submit"
-            disabled={isLoading}
-            className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            type="button"
+            onClick={handleGoToDasboard}
+            className="flex items-center px-6 py-3 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 font-medium"
           >
-            <Save className="w-4 h-4 mr-2" />
-            {isLoading ? 'Updating...' : 'Update Record'}
+            Back to Dashboard
           </button>
           
           <button
             type="button"
-            onClick={handleCancel}
+            onClick={handleGoToRecords}
             className="flex items-center px-6 py-3 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 font-medium"
           >
-            Cancel
+            Go to Records
           </button>
         </div>
-
-        <div className="mt-6 text-sm text-orange-600">
-          * Please fill all required fields with valid values
-        </div>
       </form>
+
+      {/* Trend Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+        {/* Risk Trend */}
+        <div className="bg-white rounded-lg shadow-sm p-6 border">
+          <h3 className="text-lg font-semibold text-blue-600 mb-4">Risk Trend</h3>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={riskTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" interval="preserveStartEnd" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* BMI Trend */}
+        <div className="bg-white rounded-lg shadow-sm p-6 border">
+          <h3 className="text-lg font-semibold text-green-600 mb-4">BMI Trend</h3>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={bmiTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" interval="preserveStartEnd" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Risk Level Distribution */}
+          <div className="bg-white rounded-lg shadow-sm p-6 border">
+            <h3 className="text-lg font-semibold text-gray-600 mb-4">Risk Level Distribution</h3>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={riskDistributionData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {riskDistributionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center space-x-4 mt-4">
+              {riskDistributionData.map((item, index) => (
+                <div key={index} className="flex items-center">
+                  <div className={`w-3 h-3 rounded-full mr-2`} style={{ backgroundColor: item.color }}></div>
+                  <span className="text-sm text-gray-600">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+      </div>
     </div>
   );
 }

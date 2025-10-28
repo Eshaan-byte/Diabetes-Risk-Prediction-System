@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import UpdateData from './pages/UpdateData';
 import ReviewRecords from './pages/ReviewRecords';
 import EditRecord from './pages/EditRecord';
+import RecordResult from './pages/RecordResult';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -30,6 +31,7 @@ function AppRoutes() {
         <Route path="/update-data" element={<UpdateData />} />
         <Route path="/review-records" element={<ReviewRecords />} />
         <Route path="/edit-record/:id" element={<EditRecord />} />
+        <Route path="/record-result/:id" element={<RecordResult />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </Layout>

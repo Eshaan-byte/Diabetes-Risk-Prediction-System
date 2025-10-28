@@ -21,9 +21,9 @@ export interface Assessment {
 interface DataContextType {
   assessments: Assessment[];
   fetchAssessments: ()=> Promise<void>;
-  addAssessment: (assessment: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'>) => Promise<void>;
+  addAssessment: (assessment: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'>) => Promise<string>;
   addAssessmentsBulk: (assessments: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'>[]) => Promise<void>;
-  updateAssessment: (id: string, assessment: Assessment) => Promise<void>;
+  updateAssessment: (id: string, assessment: Omit<Assessment, 'riskLevel' | 'riskPercentage'>) => Promise<void>;
   deleteAssessment: (id: string) => Promise<void>;
   getLatestAssessment: () => Assessment | undefined;
 }
@@ -116,13 +116,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify(mapAssessmentToApi(assessment)),
       });
 
+      const data = await res.json(); // parse the response body
+
       if (res.ok) {
         await fetchAssessments();
+        return data.record_id;
       } else {
         console.error("Failed to add assessment", await res.json());
+        return null;
       }
     } catch (err) {
       console.error("Network error adding assessment:", err);
+      return null;
     }
   };
 
@@ -134,9 +139,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const payload = assessments.map(a => (
       mapAssessmentToApi(a)
     ));
-
-    console.log(assessments)
-    console.log(payload)
 
     const res = await fetch(`${API_BASE}/records/bulk`, {
       method: "POST",
@@ -158,10 +160,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }
 };
 
-
-
   //UpdateAssessment APICALL
-  const updateAssessment = async (id: string, updatedAssessment: Assessment) => {
+  const updateAssessment = async (id: string, updatedAssessment: Omit<Assessment, 'riskLevel' | 'riskPercentage'>) => {
     try {
       const res = await fetch(`${API_BASE}/records/${id}`, {
         method: "PUT",

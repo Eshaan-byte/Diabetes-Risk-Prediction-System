@@ -14,6 +14,10 @@ export default function ReviewRecords() {
     setSelectedRecord(selectedRecord === id ? null : id);
   };
 
+  const handleFullView = (id: string) => {
+    navigate(`/record-result/${id}`);
+  };
+
   const handleEdit = (id: string) => {
     navigate(`/edit-record/${id}`);
   };
@@ -132,7 +136,7 @@ export default function ReviewRecords() {
                       <td colSpan={7} className="px-6 py-4 bg-gray-50">
                         <div className="space-y-4">
                           <h4 className="font-semibold text-gray-900">Detailed Assessment Data</h4>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                             <div>
                               <span className="font-medium text-gray-700">Pregnancies:</span>
                               <p className="text-gray-900">{assessment.pregnancies || 'N/A'}</p>
@@ -148,6 +152,14 @@ export default function ReviewRecords() {
                             <div>
                               <span className="font-medium text-gray-700">Age:</span>
                               <p className="text-gray-900">{assessment.age} years</p>
+                            </div>
+                            <div>
+                              <button
+                                onClick={() => handleFullView(assessment.id!)}
+                                className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                              >
+                                View Full Page
+                              </button>
                             </div>
                           </div>
                         </div>

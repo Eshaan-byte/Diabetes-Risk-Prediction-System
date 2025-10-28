@@ -15,6 +15,7 @@ interface FormData {
 }
 
 export default function UpdateData() {
+  
   const navigate = useNavigate();
   const { addAssessment, addAssessmentsBulk } = useData();
 
@@ -91,7 +92,7 @@ export default function UpdateData() {
       return;
     }
     
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsLoading(false);
       
       // Add assessment to context
@@ -106,7 +107,8 @@ export default function UpdateData() {
         age: parseInt(formData.age),
       };
 
-      addAssessment(assessment);
+      const id = await addAssessment(assessment)
+      navigate(`/record-result/${id}`)
     }, 1500);
   }
 
