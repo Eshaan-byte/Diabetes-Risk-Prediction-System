@@ -39,19 +39,52 @@ export default function ReviewRecords() {
 
   // Prepare chart data
   const riskTrendData = assessments.map(a => ({
+    id: a.id,
     date: format(new Date(a.date!), 'dd/MM/yyyy'),
     risk: a.riskPercentage
   }));
 
+  //Prepare offset for RISK TREND DATA with same dates
+  const riskTrendDataWithOffset = riskTrendData.map((item, index, arr) => {
+    // Count previous duplicates
+    const duplicateCount = arr.slice(0, index).filter(d => d.date === item.date).length;
+    return {
+      ...item,
+      dateForChart: duplicateCount ? `${item.date} (${duplicateCount})` : item.date
+    };
+  });
+
   const bmiTrendData = assessments.map(a => ({
+    id: a.id,
     date: format(new Date(a.date!), 'dd/MM/yyyy'),
     bmi: a.bmi
   }));
 
+  //Prepare offset for BMI TRENDS with same dates
+  const bmiTrendWithOffset = bmiTrendData.map((item, index, arr) => {
+    // Count previous duplicates
+    const duplicateCount = arr.slice(0, index).filter(d => d.date === item.date).length;
+    return {
+      ...item,
+      dateForChart: duplicateCount ? `${item.date} (${duplicateCount})` : item.date
+    };
+  });
+
   const glucoseTrendData = assessments.map(a => ({
+    id: a.id,
     date: format(new Date(a.date!), 'dd/MM/yyyy'),
     glucose: a.glucose
   }));
+
+  //Prepare offset for GLUCOSE TRENDS with same dates
+  const glucoseTrendWithOffset = glucoseTrendData.map((item, index, arr) => {
+    // Count previous duplicates
+    const duplicateCount = arr.slice(0, index).filter(d => d.date === item.date).length;
+    return {
+      ...item,
+      dateForChart: duplicateCount ? `${item.date} (${duplicateCount})` : item.date
+    };
+  });
 
   return (
     <div className="space-y-8">
@@ -180,12 +213,23 @@ export default function ReviewRecords() {
           <h3 className="text-lg font-semibold text-blue-600 mb-4">Risk Trend</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={riskTrendData}>
+              <LineChart data={riskTrendDataWithOffset}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" interval="preserveStartEnd" />
+                <XAxis dataKey="dateForChart" interval="preserveStartEnd" padding={{ left: 20, right: 20 }} />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2} />
+                <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2} 
+                  dot={{ r: 4 }} 
+                  activeDot={{
+                    r: 7,
+                    style: { cursor: "pointer" },
+                    onClick: (_, payload) => {
+                      console.log(payload);
+                      const id = (payload as any).payload.id
+                      navigate(`/record-result/${id}`);
+                    }
+                  }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -196,12 +240,23 @@ export default function ReviewRecords() {
           <h3 className="text-lg font-semibold text-green-600 mb-4">BMI Trend</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={bmiTrendData}>
+              <LineChart data={bmiTrendWithOffset}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" interval="preserveStartEnd" />
+                <XAxis dataKey="dateForChart" interval="preserveStartEnd" padding={{ left: 20, right: 20 }} />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} />
+                <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} 
+                  dot={{ r: 4 }} 
+                  activeDot={{
+                    r: 7,
+                    style: { cursor: "pointer" },
+                    onClick: (_, payload) => {
+                      console.log(payload);
+                      const id = (payload as any).payload.id
+                      navigate(`/record-result/${id}`);
+                    }
+                  }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -212,12 +267,23 @@ export default function ReviewRecords() {
           <h3 className="text-lg font-semibold text-purple-600 mb-4">Glucose Trend</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={glucoseTrendData}>
+              <LineChart data={glucoseTrendWithOffset}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" interval="preserveStartEnd" />
+                <XAxis dataKey="dateForChart" interval="preserveStartEnd" padding={{ left: 20, right: 20 }} />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="glucose" stroke="#8B5CF6" strokeWidth={2} />
+                <Line type="monotone" dataKey="glucose" stroke="#8B5CF6" strokeWidth={2} 
+                  dot={{ r: 4 }} 
+                  activeDot={{
+                    r: 7,
+                    style: { cursor: "pointer" },
+                    onClick: (_, payload) => {
+                      console.log(payload);
+                      const id = (payload as any).payload.id
+                      navigate(`/record-result/${id}`);
+                    }
+                  }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>

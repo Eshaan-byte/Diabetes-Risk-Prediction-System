@@ -93,7 +93,7 @@ export default function UpdateData() {
     }
     
     setTimeout(async () => {
-      setIsLoading(false);
+      
       
       // Add assessment to context
       const assessment: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'> = {
@@ -108,6 +108,7 @@ export default function UpdateData() {
       };
 
       const id = await addAssessment(assessment)
+      setIsLoading(false);
       navigate(`/record-result/${id}`)
     }, 1500);
   }

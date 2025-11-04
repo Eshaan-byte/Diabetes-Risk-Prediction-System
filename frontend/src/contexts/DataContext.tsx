@@ -33,7 +33,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 function mapApiToAssessment(apiData: any): Assessment {
   return {
     id: String(apiData.record_id),
-    date: apiData.created_at.split("T")[0], // just YYYY-MM-DD
+    date: apiData.created_at.split("T")[0], // just DD-MM-YYYY
     riskLevel: apiData.outcome.includes("Low")
       ? "Low"
       : apiData.outcome.includes("Medium")

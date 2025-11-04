@@ -1,10 +1,12 @@
 import React from 'react';
 import { useData } from '../contexts/DataContext';
+import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Users, Activity, Calendar } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 import { format } from 'date-fns';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { assessments, getLatestAssessment } = useData();
   const latestAssessment = getLatestAssessment();
 
@@ -15,23 +17,49 @@ export default function Dashboard() {
   const latestDate = latestAssessment ? format(new Date(latestAssessment.date!), 'dd/MM/yyyy') : '';
 
   // Prepare chart data
+  {/* Risk Trend Over Time */}
   const riskTrendData = assessments.map(a => ({
+    id: a.id,
     date: format(new Date(a.date!), 'dd/MM/yy'),
     risk: a.riskPercentage
   }));
+  
+  //Prepare offset for RISK TREND DATA with same dates
+  const riskTrendDataWithOffset = riskTrendData.map((item, index, arr) => {
+    // Count previous duplicates
+    const duplicateCount = arr.slice(0, index).filter(d => d.date === item.date).length;
+    return {
+      ...item,
+      dateForChart: duplicateCount ? `${item.date} (${duplicateCount})` : item.date
+    };
+  });
 
+  {/* Risk Level Distribution */}
   const riskDistributionData = [
     { name: 'Low Risk', value: assessments.filter(a => a.riskLevel === 'Low').length,   color: '#10B981' },
     { name: 'Moderate Risk', value: assessments.filter(a => a.riskLevel === 'Moderate').length, color: '#F59E0B' },
     { name: 'High Risk', value: assessments.filter(a => a.riskLevel === 'High').length, color: '#EF4444' }
   ];
 
+  {/* BMI & Glucose Trends */}
   const bmiGlucoseTrendData = assessments.map(a => ({
+    id: a.id,
     date: format(new Date(a.date!), 'dd/MM/yy'),
     bmi: a.bmi,
     glucose: a.glucose / 5 // Scale glucose for better visualization
   }));
 
+  //Prepare offset for BMI & GLUCOSE TRENDS with same dates
+  const bmiGlucoseTrendWithOffset = bmiGlucoseTrendData.map((item, index, arr) => {
+    // Count previous duplicates
+    const duplicateCount = arr.slice(0, index).filter(d => d.date === item.date).length;
+    return {
+      ...item,
+      dateForChart: duplicateCount ? `${item.date} (${duplicateCount})` : item.date
+    };
+  });
+
+  {/* Health Factor Comparison */}
   const healthFactorData = [
     { factor: 'Age', current: latestAssessment?.age, optimal: 90 },
     { factor: 'Blood Pressure', current: latestAssessment?.bloodPressure, optimal: 85 },
@@ -99,15 +127,26 @@ export default function Dashboard() {
         {/* Risk Trend Over Time */}
         <div className="bg-white rounded-lg shadow-sm p-6 border">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk Trend Over Time</h3>
-          <p className="text-sm text-gray-600 mb-4">Your diabetes risk percentage progression</p>
+          <p className="text-sm text-gray-600 mb-4">Your diabetes risk percentage progression. Click the dot for record details</p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={riskTrendData}>
+              <LineChart data={riskTrendDataWithOffset}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" interval="preserveStartEnd" />
+                <XAxis dataKey="dateForChart" interval="preserveStartEnd" padding={{ left: 20, right: 20 }} />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2} />
+                <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2} 
+                  dot={{ r: 4 }} 
+                  activeDot={{
+                    r: 7,
+                    style: { cursor: "pointer" },
+                    onClick: (_, payload) => {
+                      console.log(payload);
+                      const id = (payload as any).payload.id
+                      navigate(`/record-result/${id}`);
+                    }
+                  }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -149,17 +188,39 @@ export default function Dashboard() {
         {/* BMI & Glucose Trends */}
         <div className="bg-white rounded-lg shadow-sm p-6 border">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">BMI & Glucose Trends</h3>
-          <p className="text-sm text-gray-600 mb-4">Key health metrics over time</p>
+          <p className="text-sm text-gray-600 mb-4">Key health metrics over time. Click the dot for record details</p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={bmiGlucoseTrendData}>
+              <LineChart data={bmiGlucoseTrendWithOffset}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" interval="preserveStartEnd" />
+                <XAxis dataKey="dateForChart" interval="preserveStartEnd" padding={{ left: 20, right: 20 }} />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} name="BMI" />
-                <Line type="monotone" dataKey="glucose" stroke="#8B5CF6" strokeWidth={2} name="Glucose (scaled)" />
+                <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} name="BMI" 
+                  dot={{ r: 4 }} 
+                  activeDot={{
+                    r: 7,
+                    style: { cursor: "pointer" },
+                    onClick: (_, payload) => {
+                      console.log(payload);
+                      const id = (payload as any).payload.id
+                      navigate(`/record-result/${id}`);
+                    }
+                  }}
+                />
+                <Line type="monotone" dataKey="glucose" stroke="#8B5CF6" strokeWidth={2} name="Glucose (scaled)" 
+                  dot={{ r: 4 }} 
+                  activeDot={{
+                    r: 7,
+                    style: { cursor: "pointer" },
+                    onClick: (_, payload) => {
+                      console.log(payload);
+                      const id = (payload as any).payload.id
+                      navigate(`/record-result/${id}`);
+                    }
+                  }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>

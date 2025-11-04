@@ -97,7 +97,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center space-x-2">
             <BarChart3 className="w-5 h-5 text-blue-600" />
             <h2 className="text-lg font-semibold text-gray-800">
-              {navItems.find(item => item.path === location.pathname)?.label || 'Dashboard'}
+              {navItems.find(item => item.path === location.pathname)?.label || 'History'}
             </h2>
           </div>
         </header>

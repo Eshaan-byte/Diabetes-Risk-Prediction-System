@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { LineChart, Line, XAxis, YAxis, PieChart, Pie, Cell, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
+import { ArrowLeft } from 'lucide-react';
 
 interface EditFormData {
+  date?: string
   pregnancies: string;
   glucose: string;
   bloodPressure: string;
@@ -22,6 +24,7 @@ export default function RecordResult() {
   const { assessments } = useData();
 
   const [formData, setFormData] = useState<EditFormData>({
+    date: '',
     pregnancies: '',
     glucose: '',
     bloodPressure: '',
@@ -36,10 +39,12 @@ export default function RecordResult() {
   const [recordFound, setRecordFound] = useState(true);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     if (id) {
       const record = assessments.find(assessment => assessment.id === id);
       if (record) {
         setFormData({
+          date: record.date,
           pregnancies: record.pregnancies?.toString() || '',
           glucose: record.glucose?.toString() || '',
           bloodPressure: record.bloodPressure?.toString() || '',
@@ -55,6 +60,11 @@ export default function RecordResult() {
       }
     }
   }, [id, assessments]);
+
+  const handleCancel = () => {
+    navigate(-1); // fallback: browser back
+  };
+
 
   const handleGoToDasboard = () => {
     navigate('/dasboard');
@@ -80,17 +90,39 @@ export default function RecordResult() {
   }
 
   // Prepare chart data
-    const riskTrendData = assessments.map(a => ({
-      date: format(new Date(a.date!), 'dd/MM/yyyy'),
-      risk: a.riskPercentage
-    }));
+  const riskTrendData = assessments.map(a => ({
+    id: a.id,
+    date: format(new Date(a.date!), 'dd/MM/yyyy'),
+    risk: a.riskPercentage
+  }));
   
-    const bmiTrendData = assessments.map(a => ({
-      date: format(new Date(a.date!), 'dd/MM/yyyy'),
-      bmi: a.bmi
-    }));
+  //Prepare offset for RISK TREND DATA with same dates
+  const riskTrendDataWithOffset = riskTrendData.map((item, index, arr) => {
+    // Count previous duplicates
+    const duplicateCount = arr.slice(0, index).filter(d => d.date === item.date).length;
+    return {
+      ...item,
+      dateForChart: duplicateCount ? `${item.date} (${duplicateCount})` : item.date
+    };
+  });
+
+  const bmiTrendData = assessments.map(a => ({
+    id: a.id,
+    date: format(new Date(a.date!), 'dd/MM/yyyy'),
+    bmi: a.bmi
+  }));
+
+  //Prepare offset for BMI TRENDS with same dates
+  const bmiTrendWithOffset = bmiTrendData.map((item, index, arr) => {
+    // Count previous duplicates
+    const duplicateCount = arr.slice(0, index).filter(d => d.date === item.date).length;
+    return {
+      ...item,
+      dateForChart: duplicateCount ? `${item.date} (${duplicateCount})` : item.date
+    };
+  });
   
-    const riskDistributionData = [
+  const riskDistributionData = [
     { name: 'Low Risk', value: assessments.filter(a => a.riskLevel === 'Low').length,   color: '#10B981' },
     { name: 'Moderate Risk', value: assessments.filter(a => a.riskLevel === 'Moderate').length, color: '#F59E0B' },
     { name: 'High Risk', value: assessments.filter(a => a.riskLevel === 'High').length, color: '#EF4444' }
@@ -100,6 +132,12 @@ export default function RecordResult() {
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex items-center space-x-4">
+        <button
+          onClick={handleCancel}
+          className="p-2 text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <div>
           <h1 className="text-3xl font-bold text-blue-600">Prediction Result</h1>
           <p className="text-gray-600">Your diabetes risk assessment result</p>
@@ -109,6 +147,10 @@ export default function RecordResult() {
       {/* View Form */}
       <form className="bg-white rounded-lg shadow-sm p-8 border">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Assessment Data</h2>
+
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Record Date: {formData.date!.split("-").reverse().join("-")}
+        </label>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div>
@@ -326,12 +368,23 @@ export default function RecordResult() {
           <h3 className="text-lg font-semibold text-blue-600 mb-4">Risk Trend</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={riskTrendData}>
+              <LineChart data={riskTrendDataWithOffset}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" interval="preserveStartEnd" />
+                <XAxis dataKey="dateForChart" interval="preserveStartEnd" padding={{ left: 20, right: 20 }} />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2} />
+                <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2} 
+                  dot={{ r: 4 }} 
+                  activeDot={{
+                    r: 7,
+                    style: { cursor: "pointer" },
+                    onClick: (_, payload) => {
+                      console.log(payload);
+                      const id = (payload as any).payload.id
+                      navigate(`/record-result/${id}`);
+                    }
+                  }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -342,12 +395,23 @@ export default function RecordResult() {
           <h3 className="text-lg font-semibold text-green-600 mb-4">BMI Trend</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={bmiTrendData}>
+              <LineChart data={bmiTrendWithOffset}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" interval="preserveStartEnd" />
+                <XAxis dataKey="dateForChart" interval="preserveStartEnd" padding={{ left: 20, right: 20 }} />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} />
+                <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} 
+                  dot={{ r: 4 }} 
+                  activeDot={{
+                    r: 7,
+                    style: { cursor: "pointer" },
+                    onClick: (_, payload) => {
+                      console.log(payload);
+                      const id = (payload as any).payload.id
+                      navigate(`/record-result/${id}`);
+                    }
+                  }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
