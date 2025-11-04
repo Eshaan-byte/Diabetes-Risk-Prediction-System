@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ModelSelector from './ModelSelector';
 import { BarChart3, LogOut, Home, FileText, Upload, Menu, X } from 'lucide-react';
 
 interface LayoutProps {
@@ -95,10 +96,16 @@ export default function Layout({ children }: LayoutProps) {
             {isSidebarOpen ? <X className="w-5 h-5 text-gray-600" /> : <Menu className="w-5 h-5 text-gray-600" />}
           </button>
           <div className="flex items-center space-x-2">
-            <BarChart3 className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-800">
+            <BarChart3 className="w-10 h-10 text-blue-600" />
+            <h2 className="text-2xl font-semibold text-gray-800">
               {navItems.find(item => item.path === location.pathname)?.label || 'History'}
             </h2>
+          </div>
+          <div className="ml-auto flex items-center space-x-2">
+            <h3 className="text-base font-semibold text-gray-800">
+              Model Used
+            </h3>
+            <ModelSelector />
           </div>
         </header>
 

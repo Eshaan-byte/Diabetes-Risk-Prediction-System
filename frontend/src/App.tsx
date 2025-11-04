@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ModelModeProvider } from './contexts/ModelModeContext';
 import { DataProvider } from './contexts/DataContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -43,9 +44,11 @@ function App() {
     <Router>
       <AuthProvider>
         <DataProvider>
-          <div className="min-h-screen bg-gray-50">
-            <AppRoutes />
-          </div>
+          <ModelModeProvider>
+            <div className="min-h-screen bg-gray-50">
+              <AppRoutes />
+            </div>
+          </ModelModeProvider>
         </DataProvider>
       </AuthProvider>
     </Router>

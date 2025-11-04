@@ -26,6 +26,19 @@ class health_records(SQLModel, table=True):
     bmi: float
     diabetic_family: int
     age: int
-    outcome: str
-    prediction_prob: float
+    
+    # Predictions from all models
+    outcome_logisticregression: str
+    prediction_prob_logisticregression: float
+    outcome_randomforest: str
+    prediction_prob_randomforest: float
+    outcome_svc: str
+    prediction_prob_svc: float
+    outcome_knn: str
+    prediction_prob_knn: float
+    outcome_mlp: str
+    prediction_prob_mlp: float
+    outcome_xgboost: str
+    prediction_prob_xgboost: float
+
     created_at: Optional[datetime.datetime] = Field(default_factory=datetime.datetime.utcnow)

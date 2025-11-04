@@ -1,6 +1,9 @@
 import React from 'react';
-import { useData } from '../contexts/DataContext';
+import { useData, Assessment } from '../contexts/DataContext';
+import { useModelMode } from '../contexts/ModelModeContext';
 import { useNavigate } from 'react-router-dom';
+import StatCard from '../components/StatCard';
+import ModelMetricsGrid from '../components/ModelMetricsGrid';
 import { TrendingUp, Users, Activity, Calendar } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 import { format } from 'date-fns';
@@ -8,12 +11,15 @@ import { format } from 'date-fns';
 export default function Dashboard() {
   const navigate = useNavigate();
   const { assessments, getLatestAssessment } = useData();
+  const { model } = useModelMode();
+  const riskPercentageKey = `riskPercentage_${model}` as keyof Assessment;
+  const riskLevelKey = `riskLevel_${model}` as keyof Assessment;
   const latestAssessment = getLatestAssessment();
 
   // Calculate statistics
   const averageBMI = assessments.reduce((sum, a) => sum + a.bmi, 0) / assessments.length;
   const totalAssessments = assessments.length;
-  const latestRiskPercentage = latestAssessment?.riskPercentage || 0;
+  const latestRiskPercentage = latestAssessment ? Number(latestAssessment[riskPercentageKey] ?? 0): 0;
   const latestDate = latestAssessment ? format(new Date(latestAssessment.date!), 'dd/MM/yyyy') : '';
 
   // Prepare chart data
@@ -21,7 +27,7 @@ export default function Dashboard() {
   const riskTrendData = assessments.map(a => ({
     id: a.id,
     date: format(new Date(a.date!), 'dd/MM/yy'),
-    risk: a.riskPercentage
+    risk: a[riskPercentageKey] as number
   }));
   
   //Prepare offset for RISK TREND DATA with same dates
@@ -36,9 +42,9 @@ export default function Dashboard() {
 
   {/* Risk Level Distribution */}
   const riskDistributionData = [
-    { name: 'Low Risk', value: assessments.filter(a => a.riskLevel === 'Low').length,   color: '#10B981' },
-    { name: 'Moderate Risk', value: assessments.filter(a => a.riskLevel === 'Moderate').length, color: '#F59E0B' },
-    { name: 'High Risk', value: assessments.filter(a => a.riskLevel === 'High').length, color: '#EF4444' }
+    { name: 'Low Risk', value: assessments.filter(a => a[riskLevelKey] === 'Low').length,   color: '#10B981' },
+    { name: 'Moderate Risk', value: assessments.filter(a => a[riskLevelKey] === 'Moderate').length, color: '#F59E0B' },
+    { name: 'High Risk', value: assessments.filter(a => a[riskLevelKey] === 'High').length, color: '#EF4444' }
   ];
 
   {/* BMI & Glucose Trends */}
@@ -67,21 +73,6 @@ export default function Dashboard() {
     { factor: 'Glucose', current: latestAssessment?.glucose, optimal: 85 }
   ];
 
-  const StatCard = ({ title, value, subtitle, icon: Icon, color }: any) => (
-    <div className="bg-white rounded-lg shadow-sm p-6 border">
-      <div className="flex items-center">
-        <div className={`p-3 rounded-lg ${color}`}>
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-        <div className="ml-4">
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-xs text-gray-500">{subtitle}</p>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -90,7 +81,10 @@ export default function Dashboard() {
         <p className="text-gray-600">Overview of your diabetes risk assessments and health trends</p>
       </div>
 
-      {/* Statistics Cards */}
+      {/* The model Performances */}
+      <ModelMetricsGrid/>
+
+      {/* Statistics Cards of User Health Records */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Diabetes Risk Level"
@@ -141,7 +135,6 @@ export default function Dashboard() {
                     r: 7,
                     style: { cursor: "pointer" },
                     onClick: (_, payload) => {
-                      console.log(payload);
                       const id = (payload as any).payload.id
                       navigate(`/record-result/${id}`);
                     }
@@ -166,6 +159,7 @@ export default function Dashboard() {
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
+                  label
                 >
                   {riskDistributionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -203,7 +197,6 @@ export default function Dashboard() {
                     r: 7,
                     style: { cursor: "pointer" },
                     onClick: (_, payload) => {
-                      console.log(payload);
                       const id = (payload as any).payload.id
                       navigate(`/record-result/${id}`);
                     }
@@ -215,7 +208,6 @@ export default function Dashboard() {
                     r: 7,
                     style: { cursor: "pointer" },
                     onClick: (_, payload) => {
-                      console.log(payload);
                       const id = (payload as any).payload.id
                       navigate(`/record-result/${id}`);
                     }

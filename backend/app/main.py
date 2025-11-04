@@ -8,7 +8,7 @@ app = FastAPI(title="Health Records API", version="1.0.0")
 origins = [
     "http://localhost:5173",   # local frontend
     "http://127.0.0.1:5173",
-    "https://your-frontend-domain.com"  # production TBA
+    "https://your-frontend-domain.com"  # production Frontend TBA
 ]
 
 app.add_middleware(

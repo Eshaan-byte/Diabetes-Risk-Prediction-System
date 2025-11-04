@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
-import { Save, ArrowLeft, Calculator } from 'lucide-react';
+import { Save, ArrowLeft } from 'lucide-react';
 
 interface EditFormData {
   pregnancies: string;

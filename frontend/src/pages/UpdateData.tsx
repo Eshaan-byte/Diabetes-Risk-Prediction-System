@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData, Assessment } from '../contexts/DataContext';
-import { Upload, Calculator, RotateCcw, FileText } from 'lucide-react';
+import { useData } from '../contexts/DataContext';
+import { Upload, Calculator, RotateCcw } from 'lucide-react';
+import { AssessmentInput } from '../contexts/DataContext';
 import Papa from 'papaparse';
 
 interface FormData {
@@ -96,7 +97,7 @@ export default function UpdateData() {
       
       
       // Add assessment to context
-      const assessment: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'> = {
+      const assessment: AssessmentInput = {
         date: new Date().toISOString().split('T')[0],
         pregnancies: parseInt(formData.pregnancies) || 0,
         glucose: parseInt(formData.glucose),
@@ -109,7 +110,7 @@ export default function UpdateData() {
 
       const id = await addAssessment(assessment)
       setIsLoading(false);
-      navigate(`/record-result/${id}`)
+      if (id) {navigate(`/record-result/${id}`)}
     }, 1500);
   }
 
@@ -160,11 +161,9 @@ export default function UpdateData() {
         return;
       }
 
-      console.log('Processed CSV data:', validData);
-      alert(`Successfully processed ${validData.length} records from CSV`);
-      
       // Call the API
       await addAssessmentsBulk(validData);
+      alert(`Successfully processed ${validData.length} records from CSV`);
       
     } catch (error) {
       console.error('Error processing CSV:', error);

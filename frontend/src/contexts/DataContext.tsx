@@ -4,11 +4,21 @@ import { getApiBase } from '../config';
 
 const API_BASE = getApiBase(); 
 
+type ModelKey = 
+  | "xgboost"
+  | "randomforest"
+  | "logisticregression"
+  | "svc"
+  | "knn"
+  | "mlp";
+
+// Helper to omit all risk fields for any model
+type RiskKeys = `riskLevel_${ModelKey}` | `riskPercentage_${ModelKey}`;
+export type AssessmentInput = Omit<Assessment, 'id' | RiskKeys>;
+
 export interface Assessment {
   id?: string;
   date?: string;
-  riskLevel: 'Low' | 'Moderate' | 'High';
-  riskPercentage: number;
   bmi: number;
   glucose: number;
   bloodPressure: number;
@@ -16,30 +26,52 @@ export interface Assessment {
   insulin?: number;
   diabetesFamily?: boolean;
   age: number;
+
+  riskLevel_xgboost: 'Low' | 'Moderate' | 'High';
+  riskPercentage_xgboost: number;
+
+  riskLevel_logisticregression: 'Low' | 'Moderate' | 'High';
+  riskPercentage_logisticregression: number;
+
+  riskLevel_randomforest: 'Low' | 'Moderate' | 'High';
+  riskPercentage_randomforest: number;
+
+  riskLevel_svc: 'Low' | 'Moderate' | 'High';
+  riskPercentage_svc: number;
+
+  riskLevel_knn: 'Low' | 'Moderate' | 'High';
+  riskPercentage_knn: number;
+
+  riskLevel_mlp: 'Low' | 'Moderate' | 'High';
+  riskPercentage_mlp: number;
 }
 
 interface DataContextType {
   assessments: Assessment[];
   fetchAssessments: ()=> Promise<void>;
-  addAssessment: (assessment: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'>) => Promise<string>;
-  addAssessmentsBulk: (assessments: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'>[]) => Promise<void>;
-  updateAssessment: (id: string, assessment: Omit<Assessment, 'riskLevel' | 'riskPercentage'>) => Promise<void>;
+  addAssessment: (assessment: AssessmentInput) => Promise<string>;
+  addAssessmentsBulk: (assessments: AssessmentInput[]) => Promise<void>;
+  updateAssessment: (id: string, assessment: AssessmentInput) => Promise<void>;
   deleteAssessment: (id: string) => Promise<void>;
   getLatestAssessment: () => Assessment | undefined;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+
+//function to map riskLevel from API to the app
+function toRiskLabel(value: string): "Low" | "Moderate" | "High" {
+  if (!value) return "Low"; // fallback
+  if (value.toLowerCase().includes("low")) return "Low";
+  if (value.toLowerCase().includes("medium") || value.toLowerCase().includes("moderate")) return "Moderate";
+  return "High";
+}
+
+//function to map the API response into the app
 function mapApiToAssessment(apiData: any): Assessment {
   return {
     id: String(apiData.record_id),
     date: apiData.created_at.split("T")[0], // just DD-MM-YYYY
-    riskLevel: apiData.outcome.includes("Low")
-      ? "Low"
-      : apiData.outcome.includes("Medium")
-      ? "Moderate"
-      : "High",
-    riskPercentage: apiData.prediction_prob,
     bmi: apiData.bmi,
     glucose: apiData.glucose,
     bloodPressure: apiData.blood_pressure,
@@ -47,10 +79,33 @@ function mapApiToAssessment(apiData: any): Assessment {
     insulin: apiData.insulin,
     diabetesFamily: Boolean(apiData.diabetic_family),
     age: apiData.age,
+     // XGBoost
+    riskLevel_xgboost: toRiskLabel(apiData.outcome_xgboost),
+    riskPercentage_xgboost: apiData.prediction_prob_xgboost,
+
+    // Logistic Regression
+    riskLevel_logisticregression: toRiskLabel(apiData.outcome_logisticregression),
+    riskPercentage_logisticregression: apiData.prediction_prob_logisticregression,
+
+    // Random Forest
+    riskLevel_randomforest: toRiskLabel(apiData.outcome_randomforest),
+    riskPercentage_randomforest: apiData.prediction_prob_randomforest,
+
+    // SVC
+    riskLevel_svc: toRiskLabel(apiData.outcome_svc),
+    riskPercentage_svc: apiData.prediction_prob_svc,
+
+    // KNN
+    riskLevel_knn: toRiskLabel(apiData.outcome_knn),
+    riskPercentage_knn: apiData.prediction_prob_knn,
+
+    // MLP
+    riskLevel_mlp: toRiskLabel(apiData.outcome_mlp),
+    riskPercentage_mlp: apiData.prediction_prob_mlp,
   };
 }
 
-function mapAssessmentToApi(assessment: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'> | Assessment,
+function mapAssessmentToApi(assessment: AssessmentInput | Assessment,
   isUpdate = false) {
   const payload: any = {
     glucose: assessment.glucose,
@@ -105,7 +160,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
 
   //AddAssessment API CALL
-  const addAssessment = async (assessment: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'>) => {
+  const addAssessment = async (assessment: AssessmentInput) => {
     try {
       const res = await fetch(`${API_BASE}/records`, {
         method: "POST",
@@ -118,13 +173,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       const data = await res.json(); // parse the response body
 
-      if (res.ok) {
-        await fetchAssessments();
-        return data.record_id;
-      } else {
-        console.error("Failed to add assessment", await res.json());
-        return null;
-      }
+
+      if (!res.ok) {
+      const errText = await res.text(); // or res.json() if API returns JSON
+      console.error("Failed to add assessments", errText);
+      throw new Error(`Failed to add assessments: ${res.status} - ${errText}`);
+    }
+
+    // After insert, refetch all assessments
+    await fetchAssessments();
+    return data.record_id;
     } catch (err) {
       console.error("Network error adding assessment:", err);
       return null;
@@ -132,13 +190,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   //AddAssesmenntBulk APIcall
-  const addAssessmentsBulk = async (
-  assessments: Omit<Assessment, 'id' | 'riskLevel' | 'riskPercentage'>[]) => {
+  const addAssessmentsBulk = async (assessments: AssessmentInput[]) => {
   try {
     // map each assessment to API format with created_at
-    const payload = assessments.map(a => (
-      mapAssessmentToApi(a)
-    ));
+    const payload = assessments.map(a => (mapAssessmentToApi(a)));
 
     const res = await fetch(`${API_BASE}/records/bulk`, {
       method: "POST",
@@ -148,20 +203,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
       },
       body: JSON.stringify(payload),
     });
+    console.log(payload)
 
-    if (res.ok) {
-      // After bulk insert, refetch all assessments
-      await fetchAssessments();
-    } else {
-      console.error("Failed to add bulk assessments", await res.json());
+    if (!res.ok) {
+      const errText = await res.text(); // or res.json() if API returns JSON
+      console.error("Failed to add bulk assessments", errText);
+      throw new Error(`Failed to add bulk assessments: ${res.status} - ${errText}`);
     }
+
+    // After bulk insert, refetch all assessments
+    await fetchAssessments();
   } catch (err) {
     console.error("Network error adding bulk assessments:", err);
+    throw err;
   }
 };
 
   //UpdateAssessment APICALL
-  const updateAssessment = async (id: string, updatedAssessment: Omit<Assessment, 'riskLevel' | 'riskPercentage'>) => {
+  const updateAssessment = async (id: string, updatedAssessment: AssessmentInput) => {
     try {
       const res = await fetch(`${API_BASE}/records/${id}`, {
         method: "PUT",

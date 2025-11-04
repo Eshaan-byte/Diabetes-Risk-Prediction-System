@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../contexts/DataContext';
+import { useData, Assessment } from '../contexts/DataContext';
+import { useModelMode } from '../contexts/ModelModeContext';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
@@ -9,6 +10,9 @@ export default function ReviewRecords() {
   const navigate = useNavigate();
   const { assessments, deleteAssessment } = useData();
   const [selectedRecord, setSelectedRecord] = useState<string | null>(null);
+  const { model } = useModelMode();
+  const riskPercentageKey = `riskPercentage_${model}` as keyof Assessment;
+  const riskLevelKey = `riskLevel_${model}` as keyof Assessment;
 
   const handleView = (id: string) => {
     setSelectedRecord(selectedRecord === id ? null : id);
@@ -41,7 +45,7 @@ export default function ReviewRecords() {
   const riskTrendData = assessments.map(a => ({
     id: a.id,
     date: format(new Date(a.date!), 'dd/MM/yyyy'),
-    risk: a.riskPercentage
+    risk: a[riskPercentageKey] as number
   }));
 
   //Prepare offset for RISK TREND DATA with same dates
@@ -122,12 +126,12 @@ export default function ReviewRecords() {
                       {format(new Date(assessment.date!), 'dd/MM/yyyy')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRiskColor(assessment.riskLevel)}`}>
-                        {assessment.riskLevel}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRiskColor(assessment[riskLevelKey] as 'Low' | 'Moderate' | 'High')}`}>
+                        {assessment[riskLevelKey]}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {assessment.riskPercentage}%
+                      {assessment[riskPercentageKey]}%
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {assessment.bmi}
@@ -224,7 +228,6 @@ export default function ReviewRecords() {
                     r: 7,
                     style: { cursor: "pointer" },
                     onClick: (_, payload) => {
-                      console.log(payload);
                       const id = (payload as any).payload.id
                       navigate(`/record-result/${id}`);
                     }
@@ -251,7 +254,6 @@ export default function ReviewRecords() {
                     r: 7,
                     style: { cursor: "pointer" },
                     onClick: (_, payload) => {
-                      console.log(payload);
                       const id = (payload as any).payload.id
                       navigate(`/record-result/${id}`);
                     }
@@ -278,7 +280,6 @@ export default function ReviewRecords() {
                     r: 7,
                     style: { cursor: "pointer" },
                     onClick: (_, payload) => {
-                      console.log(payload);
                       const id = (payload as any).payload.id
                       navigate(`/record-result/${id}`);
                     }

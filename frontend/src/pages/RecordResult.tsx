@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useData } from '../contexts/DataContext';
+import { useData, Assessment } from '../contexts/DataContext';
+import { useModelMode } from '../contexts/ModelModeContext';
+import ModelSelector from '../components/ModelSelector';
+import ModelMetricsGrid from '../components/ModelMetricsGrid';
 import { LineChart, Line, XAxis, YAxis, PieChart, Pie, Cell, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
 import { ArrowLeft } from 'lucide-react';
@@ -22,6 +25,9 @@ export default function RecordResult() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { assessments } = useData();
+  const { model } = useModelMode();
+  const riskPercentageKey = `riskPercentage_${model}` as keyof Assessment;
+  const riskLevelKey = `riskLevel_${model}` as keyof Assessment;
 
   const [formData, setFormData] = useState<EditFormData>({
     date: '',
@@ -39,7 +45,6 @@ export default function RecordResult() {
   const [recordFound, setRecordFound] = useState(true);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
     if (id) {
       const record = assessments.find(assessment => assessment.id === id);
       if (record) {
@@ -52,14 +57,18 @@ export default function RecordResult() {
           bmi: record.bmi?.toString() || '',
           diabetesFamily: record.diabetesFamily || false,
           age: record.age?.toString() || '',
-          riskLevel: record.riskLevel,
-          riskPercentage: record.riskPercentage
+          riskLevel: (record[riskLevelKey] as "Low" | "Moderate" | "High") || "Low",
+          riskPercentage: (record[riskPercentageKey] as number) || 0
         });
       } else {
         setRecordFound(false);
       }
     }
-  }, [id, assessments]);
+  }, [id, assessments, model]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   const handleCancel = () => {
     navigate(-1); // fallback: browser back
@@ -93,7 +102,7 @@ export default function RecordResult() {
   const riskTrendData = assessments.map(a => ({
     id: a.id,
     date: format(new Date(a.date!), 'dd/MM/yyyy'),
-    risk: a.riskPercentage
+    risk: a[riskPercentageKey] as number
   }));
   
   //Prepare offset for RISK TREND DATA with same dates
@@ -123,9 +132,9 @@ export default function RecordResult() {
   });
   
   const riskDistributionData = [
-    { name: 'Low Risk', value: assessments.filter(a => a.riskLevel === 'Low').length,   color: '#10B981' },
-    { name: 'Moderate Risk', value: assessments.filter(a => a.riskLevel === 'Moderate').length, color: '#F59E0B' },
-    { name: 'High Risk', value: assessments.filter(a => a.riskLevel === 'High').length, color: '#EF4444' }
+    { name: 'Low Risk', value: assessments.filter(a => a[riskLevelKey] === 'Low').length,   color: '#10B981' },
+    { name: 'Moderate Risk', value: assessments.filter(a => a[riskLevelKey] === 'Moderate').length, color: '#F59E0B' },
+    { name: 'High Risk', value: assessments.filter(a => a[riskLevelKey] === 'High').length, color: '#EF4444' }
   ];
 
   return (
@@ -166,7 +175,7 @@ export default function RecordResult() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               readOnly
             />
-            <p className="text-xs text-gray-500 mt-1">Enter 0 if never pregnant</p>
+            <p className="text-xs text-gray-500 mt-1">0 = never pregnant</p>
           </div>
 
           <div>
@@ -297,9 +306,14 @@ export default function RecordResult() {
 
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Results</h2>
 
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-2 mb-4">
+          <h3 className="block text-base font-semibold text-gray-800">Model Used</h3>
+          <ModelSelector />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2  ">
               Risk Level
             </label>
             <input
@@ -361,6 +375,12 @@ export default function RecordResult() {
         </div>
       </form>
 
+
+
+      {/* The model Performances */}
+      <ModelMetricsGrid/>
+
+
       {/* Trend Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         {/* Risk Trend */}
@@ -379,7 +399,6 @@ export default function RecordResult() {
                     r: 7,
                     style: { cursor: "pointer" },
                     onClick: (_, payload) => {
-                      console.log(payload);
                       const id = (payload as any).payload.id
                       navigate(`/record-result/${id}`);
                     }
@@ -406,7 +425,6 @@ export default function RecordResult() {
                     r: 7,
                     style: { cursor: "pointer" },
                     onClick: (_, payload) => {
-                      console.log(payload);
                       const id = (payload as any).payload.id
                       navigate(`/record-result/${id}`);
                     }
@@ -430,6 +448,7 @@ export default function RecordResult() {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
+                    label
                   >
                     {riskDistributionData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
