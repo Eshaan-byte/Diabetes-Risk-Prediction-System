@@ -83,6 +83,93 @@ export default function RecordResult() {
     navigate('/review-records');
   };
 
+  // Recommendation engine based on risk level
+  const getRecommendations = (riskLevel: 'Low' | 'Moderate' | 'High', riskPercentage: number): string[] => {
+    const bmiValue = parseFloat(formData.bmi);
+    const glucoseValue = parseFloat(formData.glucose);
+    const bloodPressureValue = parseFloat(formData.bloodPressure);
+    const age = parseFloat(formData.age);
+
+    if (riskLevel === 'Low') {
+      return [
+        '✓ Great news! Your diabetes risk is currently low.',
+        '• Continue maintaining a healthy lifestyle with balanced diet and regular exercise.',
+        '• Monitor your blood glucose levels periodically (at least once a year).',
+        '• Maintain a healthy weight with BMI between 18.5-24.9.',
+        '• Stay physically active with at least 150 minutes of moderate exercise per week.',
+        '• Consider regular health check-ups to maintain your current health status.',
+      ];
+    } else if (riskLevel === 'Moderate') {
+      const recommendations = [
+        '⚠ Your diabetes risk is moderate. Take preventive action now.',
+        '• Schedule a consultation with your healthcare provider within the next month.',
+        '• Monitor your blood glucose levels more frequently (every 3-6 months).',
+        '• Adopt a diabetes-prevention diet: reduce refined carbs and sugar intake.',
+      ];
+
+      if (bmiValue > 25) {
+        recommendations.push('• Your BMI indicates overweight. Aim to lose 5-10% of body weight through diet and exercise.');
+      }
+
+      if (glucoseValue > 125) {
+        recommendations.push('• Your glucose level is elevated. Limit sugary foods and drinks, increase fiber intake.');
+      }
+
+      if (bloodPressureValue > 80) {
+        recommendations.push('• Monitor blood pressure regularly. Reduce sodium intake and manage stress.');
+      }
+
+      recommendations.push(
+        '• Increase physical activity to at least 30 minutes daily.',
+        '• Consider joining a diabetes prevention program.',
+        '• Get adequate sleep (7-9 hours per night) to help regulate metabolism.'
+      );
+
+      return recommendations;
+    } else {
+      // High risk
+      const recommendations = [
+        '🚨 Your diabetes risk is HIGH. Immediate medical attention is recommended.',
+        '• URGENT: Schedule an appointment with your doctor or endocrinologist immediately.',
+        '• Get a comprehensive diabetes screening (HbA1c test) as soon as possible.',
+        '• Begin monitoring blood glucose levels daily if possible.',
+      ];
+
+      if (bmiValue > 30) {
+        recommendations.push('• Your BMI indicates obesity. Work with a nutritionist for a weight management plan.');
+      } else if (bmiValue > 25) {
+        recommendations.push('• Reduce weight through a structured diet and exercise program supervised by healthcare professionals.');
+      }
+
+      if (glucoseValue > 140) {
+        recommendations.push('• Your glucose level is significantly elevated. Follow a strict low-glycemic diet.');
+        recommendations.push('• Avoid all sugary beverages, refined carbohydrates, and processed foods.');
+      }
+
+      if (bloodPressureValue > 90) {
+        recommendations.push('• Your blood pressure is high. Consult a doctor about blood pressure management.');
+      }
+
+      if (age > 45) {
+        recommendations.push('• Given your age, regular diabetes screening is critical.');
+      }
+
+      if (formData.diabetesFamily) {
+        recommendations.push('• Family history increases your risk. Genetic counseling may be beneficial.');
+      }
+
+      recommendations.push(
+        '• Strongly consider medication options with your healthcare provider.',
+        '• Join a diabetes education program to learn about prevention and management.',
+        '• Regular physical activity is crucial - aim for 45-60 minutes of moderate exercise daily.',
+        '• Work with a registered dietitian to create a personalized meal plan.',
+        '• Monitor for symptoms: excessive thirst, frequent urination, unexplained weight loss, fatigue.'
+      );
+
+      return recommendations;
+    }
+  };
+
   if (!recordFound) {
     return (
       <div className="max-w-4xl mx-auto text-center py-16">
@@ -340,19 +427,35 @@ export default function RecordResult() {
             <p className="text-xs text-gray-500 mt-1">The predicted risk percentage</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Recommendation
-            </label>
-            <input
-              type="text"
-              name="recommendation"
-              value={formData.riskLevel} //ADD RECOMMENDATION HERE
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              readOnly
-            />
-            <p className="text-xs text-gray-500 mt-1">The predicted risk level</p>
-          </div>  
+        </div>
+
+        {/* Recommendations Section */}
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Personalized Recommendations
+          </h3>
+          <div className={`p-6 rounded-lg border-2 ${
+            formData.riskLevel === 'Low'
+              ? 'bg-green-50 border-green-200'
+              : formData.riskLevel === 'Moderate'
+              ? 'bg-yellow-50 border-yellow-200'
+              : 'bg-red-50 border-red-200'
+          }`}>
+            <ul className="space-y-3">
+              {getRecommendations(formData.riskLevel, formData.riskPercentage).map((recommendation, index) => (
+                <li
+                  key={index}
+                  className={`text-sm ${
+                    index === 0
+                      ? 'font-semibold text-lg mb-2'
+                      : 'text-gray-700'
+                  }`}
+                >
+                  {recommendation}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Action Buttons */}
