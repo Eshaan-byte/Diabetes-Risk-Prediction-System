@@ -16,7 +16,7 @@ interface FormData {
 }
 
 export default function UpdateData() {
-  
+
   const navigate = useNavigate();
   const { addAssessment, addAssessmentsBulk } = useData();
 
@@ -43,11 +43,65 @@ export default function UpdateData() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    const inputElement = e.target;
 
-    const newValue = Number(value);
-    if (newValue < 0) return; // ignore negatives
+    // Get max from the input element
+    const max = inputElement.max ? parseFloat(inputElement.max) : Infinity;
 
-    setFormData({...formData,[name]: newValue});
+    // If value is empty, allow it (for clearing the field)
+    if (value === '') {
+      setFormData({ ...formData, [name]: value });
+      return;
+    }
+
+    // Convert value to number
+    const newValue = parseFloat(value);
+
+    // Ignore invalid numbers
+    if (isNaN(newValue)) {
+      return;
+    }
+
+    // Prevent negative values
+    if (newValue < 0) {
+      return;
+    }
+
+    // Only enforce max constraint during typing
+    // This allows users to type partial values like "1" when trying to reach "150"
+    if (newValue > max) {
+      return; // Block values above maximum
+    }
+
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const inputElement = e.target;
+
+    // Get min and max from the input element
+    const min = inputElement.min ? parseFloat(inputElement.min) : 0;
+    const max = inputElement.max ? parseFloat(inputElement.max) : Infinity;
+
+    if (value === '') return;
+
+    const numValue = parseFloat(value);
+
+    if (isNaN(numValue)) return;
+
+    // Clamp value between min and max when user finishes typing
+    let clampedValue = numValue;
+    if (numValue < min) {
+      clampedValue = min;
+    } else if (numValue > max) {
+      clampedValue = max;
+    }
+
+    // Update with clamped value
+    if (clampedValue !== numValue) {
+      setFormData({ ...formData, [name]: clampedValue.toString() });
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +109,7 @@ export default function UpdateData() {
     if (file && file.type === 'text/csv') {
       setCsvFile(file);
       setCsvProcessing(true);
-      
+
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
@@ -65,7 +119,7 @@ export default function UpdateData() {
             setCsvProcessing(false);
             return;
           }
-          
+
           setCsvData(results.data);
           setCsvPreview(results.data.slice(0, 5)); // Show first 5 rows as preview
           setCsvProcessing(false);
@@ -82,20 +136,20 @@ export default function UpdateData() {
 
   const handleCalculateRisk = () => {
     setIsLoading(true);
-    
+
     // Validate required fields
     const requiredFields = ['glucose', 'bloodPressure', 'insulin', 'bmi', 'age'];
     const missingFields = requiredFields.filter(field => !formData[field as keyof FormData]);
-    
+
     if (missingFields.length > 0) {
       alert('Please fill in all required fields');
       setIsLoading(false);
       return;
     }
-    
+
     setTimeout(async () => {
-      
-      
+
+
       // Add assessment to context
       const assessment: AssessmentInput = {
         date: new Date().toISOString().split('T')[0],
@@ -110,7 +164,7 @@ export default function UpdateData() {
 
       const id = await addAssessment(assessment)
       setIsLoading(false);
-      if (id) {navigate(`/record-result/${id}`)}
+      if (id) { navigate(`/record-result/${id}`) }
     }, 1500);
   }
 
@@ -135,7 +189,7 @@ export default function UpdateData() {
     }
 
     setCsvProcessing(true);
-    
+
     try {
       // Map CSV columns to expected format
       const processedData = csvData.map((row: any) => ({
@@ -144,14 +198,14 @@ export default function UpdateData() {
         bloodPressure: parseInt(row.blood_pressure || row['Blood Pressure'] || row.BloodPressure || '0') || 0,
         insulin: parseInt(row.insulin || row.Insulin || '0') || 0,
         bmi: parseFloat(row.bmi || row.BMI || '0') || 0,
-        diabetesFamily: row.diabetic_family === 'true' || row.diabetic_family === '1' || 
-                        row['Diabetic Family'] === 'true' || row['Diabetic Family'] === '1' || false,
+        diabetesFamily: row.diabetic_family === 'true' || row.diabetic_family === '1' ||
+          row['Diabetic Family'] === 'true' || row['Diabetic Family'] === '1' || false,
         age: parseInt(row.age || row.Age || '0') || 0,
         date: row.created_at || row.date || new Date().toISOString()
       }));
 
       // Validate data
-      const validData = processedData.filter(record => 
+      const validData = processedData.filter(record =>
         record.glucose > 0 && record.bloodPressure > 0 && record.bmi > 0 && record.age > 0
       );
 
@@ -164,7 +218,7 @@ export default function UpdateData() {
       // Call the API
       await addAssessmentsBulk(validData);
       alert(`Successfully processed ${validData.length} records from CSV`);
-      
+
     } catch (error) {
       console.error('Error processing CSV:', error);
       alert('Error processing CSV data');
@@ -195,12 +249,14 @@ export default function UpdateData() {
               type="number"
               name="pregnancies"
               min={0}  // prevents typing values less than 0
+              max={17}
               value={formData.pregnancies}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="Enter # of times pregnant"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">Enter 0 if never pregnant</p>
+            <p className="text-xs text-gray-500 mt-1">Enter 0 if never pregnant. Min: 0, Max: 17</p>
           </div>
 
           <div>
@@ -210,14 +266,16 @@ export default function UpdateData() {
             <input
               type="number"
               name="glucose"
-              min={0}  // prevents typing values less than 0
+              min={44}  // prevents typing values less than 0
+              max={199}
               value={formData.glucose}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="e.g., 95"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">2-hour oral glucose tolerance test</p>
+            <p className="text-xs text-gray-500 mt-1">2-hour oral glucose tolerance test. Min: 44, Max: 199</p>
           </div>
 
           <div>
@@ -227,14 +285,16 @@ export default function UpdateData() {
             <input
               type="number"
               name="bloodPressure"
-              min={0}  // prevents typing values less than 0
+              min={24}  // prevents typing values less than 0
+              max={122}
               value={formData.bloodPressure}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="e.g., 70"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Lower number in blood pressure reading</p>
+            <p className="text-xs text-gray-500 mt-1">Lower number in blood pressure reading. Min: 24, Max: 122</p>
           </div>
 
           <div>
@@ -244,14 +304,16 @@ export default function UpdateData() {
             <input
               type="number"
               name="age"
-              min={0}  // prevents typing values less than 0
+              min={21}  // prevents typing values less than 0
+              max={81}
               value={formData.age}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="e.g., 25"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Current age in years</p>
+            <p className="text-xs text-gray-500 mt-1">Current age in years. Min: 21, Max: 81</p>
           </div>
 
           <div>
@@ -261,13 +323,15 @@ export default function UpdateData() {
             <input
               type="number"
               name="insulin"
-              min={0}  // prevents typing values less than 0
+              min={14}  // prevents typing values less than 0
+              max={846}
               value={formData.insulin}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="e.g., 80"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">2-hour serum insulin level</p>
+            <p className="text-xs text-gray-500 mt-1">2-hour serum insulin level. Min: 14, Max: 846</p>
           </div>
 
           <div>
@@ -278,14 +342,16 @@ export default function UpdateData() {
               type="number"
               step="0.1"
               name="bmi"
-              min={0}  // prevents typing values less than 0
+              min={18.2}  // prevents typing values less than 0
+              max={67.1}
               value={formData.bmi}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="e.g., 32.0"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Weight (kg) / Height (m)²</p>
+            <p className="text-xs text-gray-500 mt-1">Weight (kg) / Height (m)². Min: 18.2, Max: 67.1</p>
           </div>
 
           <div>
@@ -337,10 +403,9 @@ export default function UpdateData() {
           <div className="mt-8 p-6 bg-gray-50 rounded-lg border">
             <h3 className="text-lg font-semibold mb-4">Risk Assessment Result</h3>
             <div className="flex items-center space-x-4">
-              <div className={`px-4 py-2 rounded-lg text-white font-medium ${
-                riskResult.level === 'Low' ? 'bg-green-500' :
+              <div className={`px-4 py-2 rounded-lg text-white font-medium ${riskResult.level === 'Low' ? 'bg-green-500' :
                 riskResult.level === 'Moderate' ? 'bg-yellow-500' : 'bg-red-500'
-              }`}>
+                }`}>
                 {riskResult.level} Risk
               </div>
               <span className="text-2xl font-bold">{riskResult.percentage}% Risk</span>
@@ -358,7 +423,7 @@ export default function UpdateData() {
             <Calculator className="w-4 h-4 mr-2" />
             {isLoading ? 'Calculating...' : 'Calculate Risk'}
           </button>
-          
+
           <button
             onClick={handleResetForm}
             className="flex items-center px-6 py-3 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 font-medium"
@@ -378,7 +443,7 @@ export default function UpdateData() {
           <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 mb-2">Click to upload or drag and drop</p>
           <p className="text-sm text-gray-500">CSV files only (MAX: 10MB)</p>
-          
+
           <input
             type="file"
             accept=".csv"
@@ -392,7 +457,7 @@ export default function UpdateData() {
           >
             Choose File
           </label>
-          
+
           {csvFile && (
             <div className="mt-4 p-4 bg-green-50 rounded-lg">
               <p className="text-green-800 font-medium">File selected: {csvFile.name}</p>

@@ -52,11 +52,65 @@ export default function EditRecord() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
-    const newValue = Number(value);
-    if (newValue < 0) return; // ignore negatives
+    const inputElement = e.target;
+
+    // Get max from the input element
+    const max = inputElement.max ? parseFloat(inputElement.max) : Infinity;
+
+    // If value is empty, allow it (for clearing the field)
+    if (value === '') {
+      setFormData({ ...formData, [name]: value });
+      return;
+    }
+
+    // Convert value to number
+    const newValue = parseFloat(value);
+
+    // Ignore invalid numbers
+    if (isNaN(newValue)) {
+      return;
+    }
+
+    // Prevent negative values
+    if (newValue < 0) {
+      return;
+    }
+
+    // Only enforce max constraint during typing
+    // This allows users to type partial values like "1" when trying to reach "150"
+    if (newValue > max) {
+      return; // Block values above maximum
+    }
 
     setFormData({ ...formData, [name]: value });
+  };
+
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const inputElement = e.target;
+
+    // Get min and max from the input element
+    const min = inputElement.min ? parseFloat(inputElement.min) : 0;
+    const max = inputElement.max ? parseFloat(inputElement.max) : Infinity;
+
+    if (value === '') return;
+
+    const numValue = parseFloat(value);
+
+    if (isNaN(numValue)) return;
+
+    // Clamp value between min and max when user finishes typing
+    let clampedValue = numValue;
+    if (numValue < min) {
+      clampedValue = min;
+    } else if (numValue > max) {
+      clampedValue = max;
+    }
+
+    // Update with clamped value
+    if (clampedValue !== numValue) {
+      setFormData({ ...formData, [name]: clampedValue.toString() });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -151,12 +205,14 @@ export default function EditRecord() {
               type="number"
               name="pregnancies"
               min={0}
+              max={17}
               value={formData.pregnancies}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="Enter # of times pregnant"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">Enter 0 if never pregnant</p>
+            <p className="text-xs text-gray-500 mt-1">Enter 0 if never pregnant. Min: 0, Max: 17</p>
           </div>
 
           <div>
@@ -166,14 +222,16 @@ export default function EditRecord() {
             <input
               type="number"
               name="glucose"
-              min={0}
+              min={44}
+              max={199}
               value={formData.glucose}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="e.g., 95"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">2-hour oral glucose tolerance test</p>
+            <p className="text-xs text-gray-500 mt-1">2-hour oral glucose tolerance test. Min: 44, Max: 199</p>
           </div>
 
           <div>
@@ -183,14 +241,16 @@ export default function EditRecord() {
             <input
               type="number"
               name="bloodPressure"
-              min={0}
+              min={24}
+              max={122}
               value={formData.bloodPressure}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="e.g., 70"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Lower number in blood pressure reading</p>
+            <p className="text-xs text-gray-500 mt-1">Lower number in blood pressure reading. Min: 24, Max: 122</p>
           </div>
 
           <div>
@@ -200,14 +260,16 @@ export default function EditRecord() {
             <input
               type="number"
               name="age"
-              min={0}
+              min={21}
+              max={81}
               value={formData.age}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="e.g., 25"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Current age in years</p>
+            <p className="text-xs text-gray-500 mt-1">Current age in years. Min: 21, Max: 81</p>
           </div>
 
           <div>
@@ -217,13 +279,15 @@ export default function EditRecord() {
             <input
               type="number"
               name="insulin"
-              min={0}
+              min={14}
+              max={846}
               value={formData.insulin}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="e.g., 80"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">2-hour serum insulin level</p>
+            <p className="text-xs text-gray-500 mt-1">2-hour serum insulin level. Min: 14, Max: 846</p>
           </div>
 
           <div>
@@ -234,14 +298,16 @@ export default function EditRecord() {
               type="number"
               step="0.1"
               name="bmi"
-              min={0}
+              min={18.2}
+              max={67.1}
               value={formData.bmi}
               onChange={handleInputChange}
+              onBlur={handleInputBlur}
               placeholder="e.g., 32.0"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Weight (kg) / Height (m)²</p>
+            <p className="text-xs text-gray-500 mt-1">Weight (kg) / Height (m)². Min: 18.2, Max: 67.1</p>
           </div>
 
           <div className="md:col-span-2">
