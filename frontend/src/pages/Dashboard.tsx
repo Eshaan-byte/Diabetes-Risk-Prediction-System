@@ -19,17 +19,17 @@ export default function Dashboard() {
   // Calculate statistics
   const averageBMI = assessments.reduce((sum, a) => sum + a.bmi, 0) / assessments.length;
   const totalAssessments = assessments.length;
-  const latestRiskPercentage = latestAssessment ? Number(latestAssessment[riskPercentageKey] ?? 0): 0;
+  const latestRiskPercentage = latestAssessment ? Number(latestAssessment[riskPercentageKey] ?? 0) : 0;
   const latestDate = latestAssessment ? format(new Date(latestAssessment.date!), 'dd/MM/yyyy') : '';
 
   // Prepare chart data
-  {/* Risk Trend Over Time */}
+  {/* Risk Trend Over Time */ }
   const riskTrendData = assessments.map(a => ({
     id: a.id,
     date: format(new Date(a.date!), 'dd/MM/yy'),
     risk: a[riskPercentageKey] as number
   }));
-  
+
   //Prepare offset for RISK TREND DATA with same dates
   const riskTrendDataWithOffset = riskTrendData.map((item, index, arr) => {
     // Count previous duplicates
@@ -40,14 +40,14 @@ export default function Dashboard() {
     };
   });
 
-  {/* Risk Level Distribution */}
+  {/* Risk Level Distribution */ }
   const riskDistributionData = [
-    { name: 'Low Risk', value: assessments.filter(a => a[riskLevelKey] === 'Low').length,   color: '#10B981' },
+    { name: 'Low Risk', value: assessments.filter(a => a[riskLevelKey] === 'Low').length, color: '#10B981' },
     { name: 'Moderate Risk', value: assessments.filter(a => a[riskLevelKey] === 'Moderate').length, color: '#F59E0B' },
     { name: 'High Risk', value: assessments.filter(a => a[riskLevelKey] === 'High').length, color: '#EF4444' }
   ];
 
-  {/* BMI & Glucose Trends */}
+  {/* BMI & Glucose Trends */ }
   const bmiGlucoseTrendData = assessments.map(a => ({
     id: a.id,
     date: format(new Date(a.date!), 'dd/MM/yy'),
@@ -65,11 +65,11 @@ export default function Dashboard() {
     };
   });
 
-  {/* Health Factor Comparison */}
+  {/* Health Factor Comparison */ }
   const healthFactorData = [
-    { factor: 'Age', current: latestAssessment?.age, optimal: 90 },
-    { factor: 'Blood Pressure', current: latestAssessment?.bloodPressure, optimal: 85 },
-    { factor: 'BMI', current: latestAssessment?.bmi, optimal: 80 },
+    { factor: 'Age', current: latestAssessment?.age, optimal: 25 },
+    { factor: 'Blood Pressure', current: latestAssessment?.bloodPressure, optimal: 75 },
+    { factor: 'BMI', current: latestAssessment?.bmi, optimal: 22 },
     { factor: 'Glucose', current: latestAssessment?.glucose, optimal: 85 }
   ];
 
@@ -82,7 +82,7 @@ export default function Dashboard() {
       </div>
 
       {/* The model Performances */}
-      <ModelMetricsGrid/>
+      <ModelMetricsGrid />
 
       {/* Statistics Cards of User Health Records */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -129,8 +129,8 @@ export default function Dashboard() {
                 <XAxis dataKey="dateForChart" interval="preserveStartEnd" padding={{ left: 20, right: 20 }} />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2} 
-                  dot={{ r: 4 }} 
+                <Line type="monotone" dataKey="risk" stroke="#3B82F6" strokeWidth={2}
+                  dot={{ r: 4 }}
                   activeDot={{
                     r: 7,
                     style: { cursor: "pointer" },
@@ -191,8 +191,8 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} name="BMI" 
-                  dot={{ r: 4 }} 
+                <Line type="monotone" dataKey="bmi" stroke="#10B981" strokeWidth={2} name="BMI"
+                  dot={{ r: 4 }}
                   activeDot={{
                     r: 7,
                     style: { cursor: "pointer" },
@@ -202,8 +202,8 @@ export default function Dashboard() {
                     }
                   }}
                 />
-                <Line type="monotone" dataKey="glucose" stroke="#8B5CF6" strokeWidth={2} name="Glucose (scaled)" 
-                  dot={{ r: 4 }} 
+                <Line type="monotone" dataKey="glucose" stroke="#8B5CF6" strokeWidth={2} name="Glucose (scaled)"
+                  dot={{ r: 4 }}
                   activeDot={{
                     r: 7,
                     style: { cursor: "pointer" },
