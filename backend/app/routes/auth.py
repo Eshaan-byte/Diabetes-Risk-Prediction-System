@@ -1,16 +1,18 @@
 import jwt
 import os
+import secrets
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
-from ..schemas import UserCreate, UserLogin
+from ..schemas import UserCreate, UserLogin, ResendVerification
 from ..models import users
 from ..database import get_session
 from sqlmodel import Session, select
 from passlib.hash import bcrypt
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import or_
+from ..email_service import send_verification_email
 
 router = APIRouter()
 
@@ -57,7 +59,11 @@ def signup(user: UserCreate, session: Session = Depends(get_session)):
             raise HTTPException(status_code=400, detail="Email already registered")
         if existing_user.username == user.username:
             raise HTTPException(status_code=400, detail="Username already registered")
-    
+
+    # Generate verification token
+    verification_token = secrets.token_urlsafe(32)
+    token_expiry = datetime.utcnow() + timedelta(hours=24)
+
     #Hashed the password and create new user
     hashed_pw = bcrypt.hash(user.password)
     db_user = users(
@@ -67,12 +73,19 @@ def signup(user: UserCreate, session: Session = Depends(get_session)):
         last_name=user.last_name,
         phone_number=user.phone_number,
         password_hash=hashed_pw,
-        date_of_birth=user.date_of_birth
+        date_of_birth=user.date_of_birth,
+        is_verified=False,
+        verification_token=verification_token,
+        verification_token_expiry=token_expiry
     )
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
-    token = create_access_token({"sub": str(db_user.user_id)})
+
+    # Send verification email
+    email_sent = send_verification_email(db_user.email, db_user.username, verification_token)
+
+    # Return user data without access token (user needs to verify email first)
     return {
         "id": db_user.user_id,
         "email": db_user.email,
@@ -82,9 +95,75 @@ def signup(user: UserCreate, session: Session = Depends(get_session)):
         "phone_number": db_user.phone_number,
         "date_of_birth": user.date_of_birth,
         "created_at": db_user.created_at,
-        "access_token": token,
-        "token_type": "bearer"
+        "is_verified": db_user.is_verified,
+        "email_sent": email_sent,
+        "message": "Account created successfully. Please check your email to verify your account."
     }
+
+#API call to verify email
+@router.get("/verify-email")
+def verify_email(token: str, session: Session = Depends(get_session)):
+    # Find user with this verification token
+    user = session.exec(
+        select(users).where(users.verification_token == token)
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+
+    # Check if token has expired
+    if user.verification_token_expiry and datetime.utcnow() > user.verification_token_expiry:
+        raise HTTPException(status_code=400, detail="Verification token has expired. Please request a new one.")
+
+    # Check if already verified
+    if user.is_verified:
+        return {"message": "Email already verified. You can now log in."}
+
+    # Mark user as verified
+    user.is_verified = True
+    user.verification_token = None
+    user.verification_token_expiry = None
+    session.add(user)
+    session.commit()
+
+    return {
+        "message": "Email verified successfully! You can now log in to your account.",
+        "email": user.email,
+        "username": user.username
+    }
+
+
+#API call to resend verification email
+@router.post("/resend-verification")
+def resend_verification(data: ResendVerification, session: Session = Depends(get_session)):
+    # Find user by email
+    user = session.exec(
+        select(users).where(users.email == data.email)
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.is_verified:
+        raise HTTPException(status_code=400, detail="Email already verified")
+
+    # Generate new verification token
+    verification_token = secrets.token_urlsafe(32)
+    token_expiry = datetime.utcnow() + timedelta(hours=24)
+
+    user.verification_token = verification_token
+    user.verification_token_expiry = token_expiry
+    session.add(user)
+    session.commit()
+
+    # Send verification email
+    email_sent = send_verification_email(user.email, user.username, verification_token)
+
+    if email_sent:
+        return {"message": "Verification email sent successfully. Please check your inbox."}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to send verification email")
+
 
 #API call to login
 @router.post("/login")
@@ -93,6 +172,14 @@ def login(user: UserLogin, session: Session = Depends(get_session)):
     db_user = session.exec(query).first()
     if not db_user or not bcrypt.verify(user.password, db_user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # Check if email is verified
+    if not db_user.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Email not verified. Please check your email and verify your account before logging in."
+        )
+
     token = create_access_token({"sub": str(db_user.user_id)})
     return {
         "id": db_user.user_id,

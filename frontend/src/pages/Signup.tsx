@@ -45,7 +45,10 @@ export default function Signup() {
     setIsLoading(true);
     const result = await signup(formData);
     if (result.success) {
-      navigate('/dashboard');
+      // Show verification pending message instead of navigating to dashboard
+      navigate('/verification-pending', {
+        state: { email: formData.email }
+      });
     } else {
       setError(result.message);
     }

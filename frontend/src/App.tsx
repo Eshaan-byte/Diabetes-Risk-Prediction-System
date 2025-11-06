@@ -6,6 +6,8 @@ import { DataProvider } from './contexts/DataContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import VerifyEmail from './pages/VerifyEmail';
+import VerificationPending from './pages/VerificationPending';
 import Dashboard from './pages/Dashboard';
 import UpdateData from './pages/UpdateData';
 import ReviewRecords from './pages/ReviewRecords';
@@ -20,6 +22,8 @@ function AppRoutes() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verification-pending" element={<VerificationPending />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     );

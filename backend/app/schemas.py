@@ -17,6 +17,9 @@ class UserLogin(BaseModel):
     email: EmailStr | str
     password: str
 
+class ResendVerification(BaseModel):
+    email: EmailStr
+
 class PatientData(BaseModel):
     pregnancies: int
     glucose: int

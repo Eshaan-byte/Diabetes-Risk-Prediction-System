@@ -9,7 +9,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const [showResendLink, setShowResendLink] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -17,14 +18,25 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setShowResendLink(false);
 
     const result = await login(email, password);
     if (result.success) {
       navigate('/dashboard');
     } else {
       setError(result.message);
+
+      // If error is about email verification, show option to resend
+      if (result.message && result.message.includes('Email not verified')) {
+        setShowResendLink(true);
+      }
     }
     setIsLoading(false);
+  };
+
+  const handleResendVerification = () => {
+    // Navigate to verification pending page with the email
+    navigate('/verification-pending', { state: { email } });
   };
 
   return (
@@ -66,7 +78,16 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-                {error}
+                <p>{error}</p>
+                {showResendLink && (
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    className="mt-2 text-sm text-red-700 underline hover:text-red-800"
+                  >
+                    Resend verification email
+                  </button>
+                )}
               </div>
             )}
 

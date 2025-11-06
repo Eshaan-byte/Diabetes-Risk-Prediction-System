@@ -13,6 +13,9 @@ class users(SQLModel, table=True):
     username: str = Field(default=None, index=True, unique=True)
     phone_number: str
     date_of_birth: datetime.date = None
+    is_verified: bool = Field(default=False)
+    verification_token: Optional[str] = Field(default=None)
+    verification_token_expiry: Optional[datetime.datetime] = Field(default=None)
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
 #the model of health_records table
