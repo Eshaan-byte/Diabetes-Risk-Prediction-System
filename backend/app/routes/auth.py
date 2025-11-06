@@ -177,7 +177,10 @@ def login(user: UserLogin, session: Session = Depends(get_session)):
     if not db_user.is_verified:
         raise HTTPException(
             status_code=403,
-            detail="Email not verified. Please check your email and verify your account before logging in."
+            detail={
+                "message": "Email not verified. Please check your email and verify your account before logging in.",
+                "email": db_user.email
+            }
         )
 
     token = create_access_token({"sub": str(db_user.user_id)})

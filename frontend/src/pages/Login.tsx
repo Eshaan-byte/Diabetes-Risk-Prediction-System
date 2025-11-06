@@ -29,13 +29,17 @@ export default function Login() {
       // If error is about email verification, show option to resend
       if (result.message && result.message.includes('Email not verified')) {
         setShowResendLink(true);
+        // Store the actual email from the database response
+        if (result.email) {
+          setEmail(result.email);
+        }
       }
     }
     setIsLoading(false);
   };
 
   const handleResendVerification = () => {
-    // Navigate to verification pending page with the email
+    // Navigate to verification pending page with the email (now contains actual email from database)
     navigate('/verification-pending', { state: { email } });
   };
 
