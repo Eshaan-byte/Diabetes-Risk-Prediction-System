@@ -161,7 +161,9 @@ export default function Login() {
               <p className="text-sm text-green-700 mb-2">
                 Contact support if you're having trouble accessing your account
               </p>
-              <button className="bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700 transition-colors">
+              <button className="bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700 transition-colors"
+                type="button"
+                onClick={() => alert("To be added")}>
                 Contact Support
               </button>
             </div>

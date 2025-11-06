@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { getApiBase } from '../config';
+import { useEffect } from "react";
 
 const API_BASE = getApiBase(); 
 
@@ -31,6 +32,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
+  // Get the locally saved login user
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+  
   //login
   const login = async (email: string, password: string): Promise<ResponseResult> => {
     try {
@@ -59,15 +68,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, message: responseData.detail};
       }
 
+      // wait for response from api
       const data = await res.json();
-      setUser({
+
+      // store the received login information
+      const loggedInUser = {
         id: data.user_id,
         email: data.email,
         firstName: data.first_name,
         lastName: data.last_name,
         userName: data.username,
         token: data.access_token
-      });
+      };
+
+      // Set the state user to the logged user
+      setUser(loggedInUser);
+
+      // Store the login locally, so it wont logout on web refresh
+      localStorage.setItem("user", JSON.stringify(loggedInUser));
+
       return { success: true, message: "Login successful", ...data };
     } catch (err) {
       console.error(err);
@@ -105,7 +124,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   //Logout
   const logout = () => {
+    //set user state to null
     setUser(null);
+    //Remove the local login information
+    localStorage.removeItem("user");
   };
 
   return (

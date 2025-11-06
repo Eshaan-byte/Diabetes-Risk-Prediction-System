@@ -5,7 +5,7 @@ export const CONFIG = {
   REMOTE_API: "https://diabetes-risk-prediction-api.onrender.com",
 };
 
-// Get the current API base URL
+// Get the current API base URL, get by the environtmen key or the configured link
 export const getApiBase = () => {
-  return CONFIG.REMOTE_API; // or CONFIG.REMOTE_API when using remote
+  return import.meta.env.VITE_API_BASE || CONFIG.REMOTE_API;
 };

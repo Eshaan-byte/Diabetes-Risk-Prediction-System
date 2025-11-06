@@ -33,10 +33,10 @@ export default function VerifyEmail() {
         setMessage(data.message);
         setEmail(data.email);
 
-        // Redirect to login after 3 seconds
+        // Redirect to login after 10 seconds
         setTimeout(() => {
           navigate('/login');
-        }, 3000);
+        }, 10000);
       } else {
         setStatus('error');
         setMessage(data.detail || 'Verification failed. Please try again.');
@@ -91,7 +91,7 @@ export default function VerifyEmail() {
                 )}
                 <div className="bg-green-50 border border-green-200 rounded-md p-4 mt-4">
                   <p className="text-green-800 text-sm">
-                    Redirecting to login page in 3 seconds...
+                    Redirecting to login page in 10 seconds...
                   </p>
                 </div>
                 <Link

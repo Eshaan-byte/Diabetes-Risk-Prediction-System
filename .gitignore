@@ -2,6 +2,7 @@ backend/notUsed
 backend/notUsed/database/ignorethis.txt
 archive.zip
 LIINKS TO SOURCES.txt
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

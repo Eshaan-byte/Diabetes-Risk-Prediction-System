@@ -9,13 +9,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Email configuration from environment variables
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT"))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USER)
-FROM_NAME = os.getenv("FROM_NAME", "DiabetesPredict")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+FROM_EMAIL = os.getenv("FROM_EMAIL")
+FROM_NAME = os.getenv("FROM_NAME")
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 def send_verification_email(to_email: str, username: str, verification_token: str) -> bool:
     """
@@ -122,18 +122,3 @@ def send_verification_email(to_email: str, username: str, verification_token: st
         print(f"Failed to send verification email: {str(e)}")
         return False
 
-
-def send_password_reset_email(to_email: str, username: str, reset_token: str) -> bool:
-    """
-    Send password reset link to user (for future implementation)
-
-    Args:
-        to_email: Recipient email address
-        username: User's username
-        reset_token: Token for password reset
-
-    Returns:
-        bool: True if email sent successfully, False otherwise
-    """
-    # Placeholder for future password reset functionality
-    pass
