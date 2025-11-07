@@ -110,7 +110,7 @@ def send_verification_email(to_email: str, username: str, verification_token: st
             print(f"Verification link (for development): {verification_link}")
             return True  # Return True in development mode
 
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=5) as server:
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.send_message(message)

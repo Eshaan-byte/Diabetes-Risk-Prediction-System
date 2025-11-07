@@ -85,22 +85,24 @@ def signup(user: UserCreate, session: Session = Depends(get_session)):
     # Send verification email
     email_sent = send_verification_email(db_user.email, db_user.username, verification_token)
 
-    # Return user data without access token (user needs to verify email first)
-    return {
-        "id": db_user.user_id,
-        "email": db_user.email,
-        "username": db_user.username,
-        "first_name": db_user.first_name,
-        "last_name": db_user.last_name,
-        "phone_number": db_user.phone_number,
-        "date_of_birth": user.date_of_birth,
-        "created_at": db_user.created_at,
-        "is_verified": db_user.is_verified,
-        "message": "Account created successfully. Please check your email to verify your account.",
-        "verification_link": email_sent[1] #added because of the inability of render to send SMTP to the SMTP Host 
-        
-    }
-
+    if email_sent[0]:
+        # Return user data without access token (user needs to verify email first)
+        return {
+            "id": db_user.user_id,
+            "email": db_user.email,
+            "username": db_user.username,
+            "first_name": db_user.first_name,
+            "last_name": db_user.last_name,
+            "phone_number": db_user.phone_number,
+            "date_of_birth": user.date_of_birth,
+            "created_at": db_user.created_at,
+            "is_verified": db_user.is_verified,
+            "message": "Account created successfully. Please check your email to verify your account.",
+            "verification_link": email_sent[1] #added because of the inability of render to send SMTP to the SMTP Host            
+        }
+    else:
+        raise HTTPException(status_code=500, detail=f"Failed to send verification email. (Temporary solution to resolve the Render issue: {email_sent[1]} )")
+    
 #API call to verify email
 @router.get("/verify-email")
 def verify_email(token: str, session: Session = Depends(get_session)):
@@ -160,7 +162,7 @@ def resend_verification(data: ResendVerification, session: Session = Depends(get
     # Send verification email
     email_sent = send_verification_email(user.email, user.username, verification_token)
 
-    if email_sent:
+    if email_sent[0]:
         return {
                 "message": "Verification email sent successfully. Please check your inbox.", 
                 "verification_link": f"(Temporary solution to resolve the Render issue: {email_sent[1]} )"  #added because of the inability of render to send SMTP to the SMTP Host }
