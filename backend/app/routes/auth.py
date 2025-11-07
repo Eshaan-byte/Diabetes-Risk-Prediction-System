@@ -96,8 +96,9 @@ def signup(user: UserCreate, session: Session = Depends(get_session)):
         "date_of_birth": user.date_of_birth,
         "created_at": db_user.created_at,
         "is_verified": db_user.is_verified,
-        "email_sent": email_sent,
-        "message": "Account created successfully. Please check your email to verify your account."
+        "message": "Account created successfully. Please check your email to verify your account.",
+        "verification_link": email_sent[1] #added because of the inability of render to send SMTP to the SMTP Host 
+        
     }
 
 #API call to verify email
@@ -160,9 +161,12 @@ def resend_verification(data: ResendVerification, session: Session = Depends(get
     email_sent = send_verification_email(user.email, user.username, verification_token)
 
     if email_sent:
-        return {"message": "Verification email sent successfully. Please check your inbox."}
+        return {
+                "message": "Verification email sent successfully. Please check your inbox.", 
+                "verification_link": f"(Temporary solution to resolve the Render issue: {email_sent[1]} )"  #added because of the inability of render to send SMTP to the SMTP Host }
+        }
     else:
-        raise HTTPException(status_code=500, detail="Failed to send verification email")
+        raise HTTPException(status_code=500, detail=f"Failed to send verification email. (Temporary solution to resolve the Render issue: {email_sent[1]} )")
 
 
 #API call to login

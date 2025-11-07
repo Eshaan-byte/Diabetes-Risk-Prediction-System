@@ -116,9 +116,9 @@ def send_verification_email(to_email: str, username: str, verification_token: st
             server.send_message(message)
 
         print(f"Verification email sent to {to_email}")
-        return True
+        return True, verification_link
 
     except Exception as e:
         print(f"Failed to send verification email: {str(e)}")
-        return False
+        return False, verification_link
 

@@ -33,6 +33,7 @@ export default function VerificationPending() {
       });
 
       const data = await response.json();
+      console.log(data.verification_link)
 
       if (response.ok) {
         setResendMessage(data.message || 'Verification email sent successfully!');

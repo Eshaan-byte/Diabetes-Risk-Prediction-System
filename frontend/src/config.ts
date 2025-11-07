@@ -7,5 +7,5 @@ export const CONFIG = {
 
 // Get the current API base URL, get by the environtmen key or the configured link
 export const getApiBase = () => {
-  return import.meta.env.VITE_API_BASE || CONFIG.REMOTE_API;
+  return import.meta.env.VITE_API_BASE || CONFIG.LOCAL_API;
 };

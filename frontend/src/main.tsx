@@ -8,3 +8,7 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>
 );
+
+
+// Run the distribution locally
+// serve -s dist -l 5173

@@ -113,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await res.json();
+      console.log(data.verification_link)
       // Don't set user state on signup - user needs to verify email first
       return { success: true, message: data.message || "Sign Up successful. Please check your email to verify your account.", ...data };
     } catch (err) {
