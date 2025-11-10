@@ -1,11 +1,11 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field
 from typing import Optional
 import datetime
 
 #the model of users table
 class users(SQLModel, table=True):
-    user_id: UUID = Field(default=None, primary_key=True, sa_column_kwargs={"server_default": "gen_random_uuid()"})
+    user_id: UUID = Field(default_factory=uuid4, primary_key=True, sa_column_kwargs={"server_default": "gen_random_uuid()"})
     email: str
     password_hash: str
     first_name: str

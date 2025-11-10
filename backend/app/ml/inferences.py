@@ -31,7 +31,7 @@ def predict_risk(data: dict) -> dict:
     results = {}
     
     for name, model in models.items():
-        proba = model.predict_proba(X)[:, 1]
+        proba = np.array(model.predict_proba(X))[:, 1]
         risk = float(proba[0])
 
         # Use helper to get label

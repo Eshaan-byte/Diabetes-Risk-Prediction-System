@@ -82,7 +82,7 @@ class TestUserCreate:
         assert user.date_of_birth.year == 2000
 
     def test_empty_string_validation(self):
-        """Test that empty strings for required fields may be allowed by pydantic"""
+        """Test that empty strings for required fields are rejected by Pydantic"""
         user_data = {
             "email": "test@example.com",
             "password": "password123",
@@ -93,10 +93,8 @@ class TestUserCreate:
             "date_of_birth": date(1990, 1, 1)
         }
 
-        # Pydantic allows empty strings by default unless constrained
-        user = UserCreate(**user_data)
-        assert user.first_name == ""
-
+        with pytest.raises(ValidationError):
+            UserCreate(**user_data)
 
 class TestUserLogin:
     """Test suite for UserLogin schema validation"""
@@ -203,7 +201,7 @@ class TestPatientData:
         assert "bmi" in missing_fields
 
     def test_negative_values_allowed(self):
-        """Test that negative values are currently allowed (may need validation)"""
+        """Negative values should raise validation error"""
         data = {
             "pregnancies": -1,
             "glucose": -50,
@@ -214,13 +212,11 @@ class TestPatientData:
             "age": -35
         }
 
-        # Current schema allows negative values
-        # This test documents the behavior - ideally should add constraints
-        patient = PatientData(**data)
-        assert patient.pregnancies == -1
+        with pytest.raises(ValidationError):
+            PatientData(**data)
 
-    def test_float_to_int_conversion(self):
-        """Test that float values are converted to int for integer fields"""
+    def test_float_to_int_rejected(self):
+        """Test that floats with fractional parts are rejected for integer fields"""
         data = {
             "pregnancies": 2.7,
             "glucose": 120.9,
@@ -230,12 +226,12 @@ class TestPatientData:
             "diabetic_family": 0.8,
             "age": 35.9
         }
-        patient = PatientData(**data)
+        # Expect Pydantic to raise a validation error, not coerce
+        with pytest.raises(ValidationError) as exc_info:
+            PatientData(**data)
 
-        # Pydantic converts floats to ints for int fields
-        assert isinstance(patient.pregnancies, int)
-        assert isinstance(patient.glucose, int)
-        assert isinstance(patient.bmi, float)
+        errors = exc_info.value.errors()
+        assert all(e["type"] == "int_from_float" for e in errors if e["loc"][0] != "bmi")
 
     def test_diabetic_family_binary(self):
         """Test diabetic_family field accepts integer values"""
@@ -252,7 +248,7 @@ class TestPatientData:
         assert patient.diabetic_family == 1
 
     def test_zero_values(self):
-        """Test that zero values are accepted"""
+        """Test that zero values are rejected"""
         data = {
             "pregnancies": 0,
             "glucose": 0,
@@ -262,11 +258,11 @@ class TestPatientData:
             "diabetic_family": 0,
             "age": 0
         }
-        patient = PatientData(**data)
-        assert patient.age == 0
+        with pytest.raises(ValidationError):
+            PatientData(**data)
 
     def test_very_large_values(self):
-        """Test that very large values are accepted"""
+        """Test that very large values are rejected"""
         data = {
             "pregnancies": 999999,
             "glucose": 999999,
@@ -276,8 +272,8 @@ class TestPatientData:
             "diabetic_family": 999999,
             "age": 999999
         }
-        patient = PatientData(**data)
-        assert patient.age == 999999
+        with pytest.raises(ValidationError):
+            PatientData(**data)
 
 
 class TestPatientDataWithCreatedAt:

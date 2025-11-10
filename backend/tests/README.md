@@ -185,6 +185,8 @@ def test_my_endpoint(client, auth_headers):
 - BMI: 10.0-70.0
 - Diabetic Family History: 0 or 1
 - Age: 1-120 years (cannot be 0)
+- Integer fields reject floats with fractional parts
+- Negative or zero values outside range raise errors
 
 ### User Data Validation
 - Email: Valid email format (via EmailStr)
@@ -192,6 +194,7 @@ def test_my_endpoint(client, auth_headers):
 - Username: 3-30 characters, alphanumeric + underscore only
 - Phone: 10-15 digits
 - Date of Birth: Must be in the past, not more than 120 years ago
+- Empty strings for constrained fields raise validation errors
 
 ## Continuous Integration
 
