@@ -46,7 +46,7 @@ jobs:
       working-directory: ./backend
       env:
         SECRET_KEY: test-secret-key-for-ci
-        DATABASE_URL: sqlite:///:memory:
+        DATABASE_URL: "sqlite:///:memory:"
         EMAIL_ENABLED: false
       run: |
         pytest -v --tb=short --cov=app --cov-report=xml --cov-report=term
