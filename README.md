@@ -1,110 +1,67 @@
 # Diabetes Risk Prediction System
 
-![Backend Tests](https://github.com/Eshaan-byte/Diabetes-Risk-Prediction-System/actions/workflows/backend-tests.yml/badge.svg)
+[![Backend Tests](https://github.com/Eshaan-byte/Diabetes-Risk-Prediction-System/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/Eshaan-byte/Diabetes-Risk-Prediction-System/actions/workflows/backend-tests.yml)
 
-A comprehensive web application for predicting diabetes risk using machine learning, featuring a React frontend and Flask backend with automated testing.
+A comprehensive diabetes risk prediction system powered by machine learning, featuring automated patient data analysis, risk assessment, and health recommendations.
 
 ## Features
 
-- **Risk Assessment**: Calculate diabetes risk based on health metrics
-- **Data Visualization**: Interactive dashboard with charts and analytics
-- **User Management**: Secure authentication and email verification
-- **CSV Bulk Upload**: Process multiple health assessments at once
-- **Historical Records**: Track and review past assessments
-- **Automated Testing**: GitHub Actions CI/CD pipeline
+- **Machine Learning Models**: Multiple ML models (XGBoost, Random Forest, etc.) for accurate diabetes risk prediction
+- **Patient Management**: Complete CRUD operations for patient records
+- **Risk Assessment**: Dynamic risk-level based health recommendations
+- **Email Verification**: Secure user authentication with email verification
+- **Interactive Dashboard**: Visualize health metrics and trends
+- **Data Validation**: Comprehensive input validation and business rules
+- **RESTful API**: FastAPI-powered backend with automatic documentation
 
 ## Tech Stack
 
-### Frontend
-- React + TypeScript
-- Tailwind CSS
-- Vite
-- Lucide React (icons)
-- PapaParse (CSV parsing)
-
 ### Backend
-- Flask
-- Python 3.10/3.11/3.12
-- SQLite
-- pytest (testing)
+- FastAPI
+- SQLModel / SQLAlchemy
+- PostgreSQL
+- scikit-learn / XGBoost
+- pytest (with 114+ test cases)
 
-## Project Structure
-
-```
-.
-├── frontend/          # React frontend
-│   ├── src/
-│   │   ├── components/  # Reusable components
-│   │   ├── contexts/    # React contexts
-│   │   └── pages/       # Page components
-│   └── package.json
-├── backend/           # Flask backend
-│   ├── app/
-│   ├── tests/
-│   └── requirement.txt
-├── notebook/          # ML model development
-└── .github/workflows/ # CI/CD pipelines
-```
+### Frontend
+- React
+- React Router
+- Data visualization libraries
 
 ## Getting Started
-
-### Prerequisites
-
-- Node.js (v16 or higher)
-- Python (v3.10 or higher)
-- npm or yarn
 
 ### Backend Setup
 
 ```bash
 cd backend
 pip install -r requirement.txt
-python run.py
-```
-
-The backend will run on `http://localhost:5000`
-
-### Frontend Setup
-
-```bash
+uvicorn app.main:app --reload
+Frontend Setup
 cd frontend
 npm install
 npm run dev
-```
-
-The frontend will run on `http://localhost:5173`
-
-## Testing
-
-### Backend Tests
-
-```bash
+Testing
+The project includes comprehensive automated testing with GitHub Actions CI/CD:
+Unit tests for ML inference, authentication, schemas, and validators
+Integration tests for all API endpoints
+Code coverage reporting
+Automated testing on every push and pull request
+Run tests locally:
 cd backend
-pytest
-```
-
-Tests are automatically run on every push and pull request via GitHub Actions.
-
-## Health Metrics
-
-The system requires the following health measurements:
-
-- **Pregnancies**: Number of times pregnant (0-17)
-- **Glucose**: Blood glucose level in mg/dL (44-199)
-- **Blood Pressure**: Diastolic blood pressure in mmHg (24-122)
-- **Insulin**: Serum insulin level in μU/mL (14-846)
-- **BMI**: Body Mass Index (18.2-67.1)
-- **Age**: Current age in years (21-81)
-- **Diabetic Family**: Family history of diabetes (Yes/No)
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is open source and available under the MIT License.
+pytest -v --cov=app
+See TESTING.md for detailed testing documentation.
+Documentation
+User Manual
+Testing Guide
+Backend Tests README
+CI/CD
+This project uses GitHub Actions for continuous integration:
+Automated testing on Python 3.10, 3.11, and 3.12
+Code coverage reporting with Codecov
+Linting with flake8, black, and isort
+Runs on every push and pull request to main/develop branches
+License
+This project is part of an academic assignment.
+Contributors
+Eshaan Gupta
+Anusha Molusneha
